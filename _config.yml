@@ -1,5 +1,6 @@
 # Site settings
 title: wrongbaud - Reverse Engineering | HW | Console Stuff
+name: Wrongbaud's wrond bauds
 description: "A place for hardware musings..."
 baseurl: "/" # for test: remove string '/space-jekyll-template' to ''
 url: "http://wrongbaud.github.io" # for test: remove string 'http://victorvoid.github.io' to '' but in production: 'https://yourusername.github.io'
