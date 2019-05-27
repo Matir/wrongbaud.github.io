@@ -8,13 +8,13 @@ tags:
 - tools
 description: ''
 categories:
-- aracade
+- arcade
 - reverse engineering
 ---
 
 ## Background
 
-A few months ago, I recieved [one of these arcade cabinets as a gift](https://www.walmart.com/ip/Arcade-Classics-Centipede-Mini-Arcade-Game/126129499) and after playing it for about 30 seconds and being reasonably impressed with the screen quality and playability I began wondering if it might be possible to load or flash other games onto the cabinet. 
+A few months ago, I received [one of these arcade cabinets as a gift](https://www.walmart.com/ip/Arcade-Classics-Centipede-Mini-Arcade-Game/126129499) and after playing it for about 30 seconds and being reasonably impressed with the screen quality and playability I began wondering if it might be possible to load or flash other games onto the cabinet. 
 
 These cabinets come in multiple variants and there is something in common with all of them. Take a look at the list of supported cabinets (Disclaimer: I am no Atari expert, so if my versions are wrong please let me know) :
 
@@ -27,7 +27,7 @@ These cabinets come in multiple variants and there is something in common with a
 
 The thing that all of these platforms have in common is that they utilized the MOS 6502 CPU! 
 
-It's important to note that people on AtariAge and other forums alrady did a teardown and found multiple test pads that allowed other ROMs to be played, namely Centipede and QBert. See these threads for more information: 
+It's important to note that people on AtariAge and other forums already did a teardown and found multiple test pads that allowed other ROMs to be played, namely Centipede and QBert. See these threads for more information: 
 
 * <http://forum.arcadecontrols.com/index.php?topic=153405.0>
 * <http://atariage.com/forums/topic/255982-mini-arcade-alert/page-1>
@@ -45,7 +45,7 @@ The goal of this and upcoming posts is see if we can get a dump of any external 
 
 ## Now What?
 
-When looking at any embededd sytem from a reverse engineering perspective, one of the first things you do is try to catalog all of the components present. Luckily for us, this target has _very_ few onboard components and one of them even has a part number that we can google!
+When looking at any embedded system from a reverse engineering perspective, one of the first things you do is try to catalog all of the components present. Luckily for us, this target has _very_ few onboard components and one of them even has a part number that we can google!
 
 Looking at the chip slightly to the right of the right of the NOAC, we spot the part number [**Winbond 25Q16VNIQ**](https://www.winbond.com/resource-files/w25q16fw%20reve%2010072015%20sfdp.pdf). This part number is very familiar to me, so no googling was required, this is a SPI EEPROM!
 
@@ -65,7 +65,7 @@ The SPI bus requires 4 pins (there is a QUAD SPI mode that can also be used but 
 
 | Pin | Usage |
 | --- | ----- | 
-| CS (Chip Select) | Used to select the appropriate device on the SPI bus that the host wishest to comminutes with | 
+| CS (Chip Select) | Used to select the appropriate device on the SPI bus that the host wishes to communicate with | 
 | CLK (Clock) | Clock signal that is host generated, data is sampled on the **Rising** edge of the clock | 
 | MISO (Master out slave in) | This line is used to send data to the target device from the host devices, we will issue commands through this line | 
 | MOSI (Master in slave out) | Responses from the target device will be sent over this line |  
@@ -139,13 +139,13 @@ However,I found the Flashrom utility in another blog post and decided to move fo
 
 ## Buspirate / Flashrom
 
-The buspirate can be thought of as a multitool for hardware hacking and reversing. It comes out of the box with lots of features and supported protocols that make hardware analyis much easier and more streamlined. 
+The buspirate can be thought of as a multitool for hardware hacking and reversing. It comes out of the box with lots of features and supported protocols that make hardware analysis much easier and more streamlined. 
 
-Flashrom is a tool that has been developed to assist in dumping and extracting various storage mediums (such as our target EEPROM) and has support for a large amount of programmer hardware. We will be usign the buspirate as the "programmer" for our example. It's a great project that I've used countless times for tasks just like this. 
+Flashrom is a tool that has been developed to assist in dumping and extracting various storage mediums (such as our target EEPROM) and has support for a large amount of programmer hardware. We will be using the buspirate as the "programmer" for our example. It's a great project that I've used countless times for tasks just like this. 
 
 ### Building Flashrom (On Ubuntu 19.04)
 
-If you wish to build flashrom from souce, the steps can be seen below:
+If you wish to build flashrom from source, the steps can be seen below:
 
 1. Clone the source: 
   * ```git clone https://github.com/flashrom/flashrom.git```
@@ -173,7 +173,7 @@ Remember since this is a SPI flash, we need four pins: CS,CLK,MISO,MOSI. We will
 
 Once the clip is attached to the chip  as seen below, we can try to run flashrom and get a dump of the EEPROM!
 
-![Clip on Board](https://wrongbaud.github.io/assets/img/CLIP_ON_BOARD.png)
+![Clip on Board](https://wrongbaud.github.io/assets/img/CLIP_ON_BOARD.jpg)
 
 Flashrom is run as follows:
 
@@ -204,5 +204,3 @@ When we search for the first 0x100 bytes of the Rampage NES rom, we find them in
 ![Clip on Board](https://wrongbaud.github.io/assets/img/RAMPAGE_DUMP_CMP.png)
 
 The start of the rom is located at offset ```0``` and offset ```0x40000```, this type of repeated patter is fairly common in embedded systems and sometimes used as a backup method.
-
-Next time we'll dissect this ROM and see what we can find!
