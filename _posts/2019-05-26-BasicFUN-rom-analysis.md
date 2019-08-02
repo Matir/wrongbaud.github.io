@@ -133,7 +133,7 @@ So we know that the first 0x30000 bytes of data make up the Rampage ROM, so we c
 These 6 bytes at the end at 0x7FFFA:0x7FFFF likely contain the reset vector. Now you're probably wondering "What on earth makes you say that?" -- well if we look at what surrounds them we see nothing but nulls (0xFF) and we know from reading the NESDoc that reset These offsets are read in by the NES on bootup to jump the initialization code. The NES has three interrupt vectors that contain addresses within the PRG ROM that the CPU jumps to when interrupts occur. We can test this idea by replacing those bytes with 0xFF and then reflashing the cabinet, the result can be seen below:
 
 
-![Replace Vector Table](https://wrongbaud.github.io/assets/img/010_REPLACE_VECTOR_TABLE.png)
+![Replace Vector Table](https://wrongbaud.github.io/assets/img/010_REPLACE_VECTOR.png)
 
 ![Replace Vector Table Live](https://wrongbaud.github.io/assets/img/REPLACED_VECTOR_TABLE.jpg)
 
