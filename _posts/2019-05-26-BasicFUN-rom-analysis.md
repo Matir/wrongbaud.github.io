@@ -20,11 +20,9 @@ It should be noted for those that are trying to replicate this work, that in ord
 
 In the last post, we extracted the SPI flash, and found what appears to be a slightly modified Rampage ROM for the NES, see the differences in the start menu below:
 
-START_MENU_DIFF.png
+![Start Menu Diff](https://wrongbaud.github.io/assets/img/START_MENU_DIFF.jpg)
 
-However, the gameplay looks almost identical, which can also be seen below:
-
-GAMEPLAY_DIFF.gif
+However, the gameplay looks almost identical.
 
 Given this information I had two questions
 
@@ -46,11 +44,11 @@ What else could be in this flash image?
 
 Well for starters, the startup screen that can be seen below is not a part of the original NES ROM so that is most certainly taking up some space:
 
-STARTUP_SCREEN.png
+![Startup Screen](https://wrongbaud.github.io/assets/img/STARTUP_SCREEN.jpg)
 
 And there is a test menu that can be entered by holding *Start* and *Up* on the cabinet while it is powering up, so that must be taking up some space as well!
 
-TEST_MENU.png
+![Debug Menu](https://wrongbaud.github.io/assets/img/TEST_MENU.jpg)
 
 So there is likely some initial bootstrap code that is run that determines whether to jump into the debug menu or just go straight to the Rampage rom. 
 
@@ -77,7 +75,6 @@ The CHR-ROM was addressable cia the PPU and the PRG-ROM was by the CPU. In order
 
 Note that the MOS6502 could address up 60 0xFFFF (16 bits of data). Two 16KB banks of that were used for storing the PRG-ROM (The game's code), at 0x8000 and 0xC000, see the memory map below pulled from the infamous NESDoc:
 
-NES_MEMORY_MAP.png
 
 ![NES Memory Map](https://wrongbaud.github.io/assets/img/NES_MEMORY_MAP.png)
 
@@ -121,10 +118,7 @@ wrongbaud@wubuntu:~/blog/cab-work/roms$ dd if=YOSH.bin of=../eeprom/flash.bin
 196608 bytes (197 kB, 192 KiB) copied, 0.00276238 s, 71.2 MB/s
 wrongbaud@wubuntu:~/blog/cab-work/roms$
 ```
-
-YOSHIS_COOKIE.png
-
-![Yoshi's Cookie](https://wrongbaud.github.io/assets/img/YOSHIS.gif)
+![Yoshis Cookie](https://wrongbaud.github.io/assets/img/YOSHIS_COOKIE.jpg)
 
 It works and is fully playable!
 
@@ -134,13 +128,14 @@ My hope here is that the loader configures the mapper and mirroring layout of th
 
 So we know that the first 0x30000 bytes of data make up the Rampage ROM, so we can ignore them from the start. There is data in the flash dump from 0x30000 to 0x80000 if we jump to 0x80000 we see an interesting set of bytes at the end that give us a hint:
 
-VECTOR_TABLE.PNG
+![Vector Table](https://wrongbaud.github.io/assets/img/VECTOR_TABLE.jpg)
 
 These 6 bytes at the end at 0x7FFFA:0x7FFFF likely contain the reset vector. Now you're probably wondering "What on earth makes you say that?" -- well if we look at what surrounds them we see nothing but nulls (0xFF) and we know from reading the NESDoc that reset These offsets are read in by the NES on bootup to jump the initialization code. The NES has three interrupt vectors that contain addresses within the PRG ROM that the CPU jumps to when interrupts occur. We can test this idea by replacing those bytes with 0xFF and then reflashing the cabinet, the result can be seen below:
 
-010_REPLACE_VECTOR.png
 
-REPLACED_VECTOR_TABLE.png
+![Replace Vector Table](https://wrongbaud.github.io/assets/img/010_REPLACE_VECTOR_TABLE.jpg)
+
+![Replace Vector Table Live](https://wrongbaud.github.io/assets/img/REPLACED_VECTOR_TABLE.jpg)
 
 Ah and as we can see, no signs of life whatsoever. Moving forward let's work under the assumption that 0x7C000:0x80000 is mapped at 0xC000 on boot up by the NOAC. 0x7C000 is the assumed start point because the PRG banks were 16kb at 0x8000 and 0xC000. 
 
@@ -167,10 +162,10 @@ This may be extra data, or a partial game that was not implemented, for now we'l
 
 So what happens if we remove 0x70000:0x70B00?
 
-70000_7B000_REMOVED.png
+![CHR Table for Debug Menu](https://wrongbaud.github.io/assets/img/70000_7B000_REMOVED.jpg)
 
 This is the CHR table for the opening menu and the debug menu!
 
 ## Conclusion
 
-So we now believe that we have a solid understanding of how the ROM  is structured we can load up the initial loader in Ghidra and start really digging into this! But in order to do that we're going to need a loader or at the very least a script to properly load the NES ROM!
+So we now believe that we have a solid understanding of how the ROM  is structured we can load up the initial loader in Ghidra and start really digging into this! But in order to do that we're going to need a loader or at the very least a script to properly load the NES ROM! The next post in this series will focus on using GHIDRA to reverse engineer what we know about the bootstrap code and test menu! Thanks for reading!
