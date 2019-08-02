@@ -14,17 +14,17 @@ categories:
 
 ### Corrections and Omissions
 
-It should be noted for those that are trying to replicate this work, that in order to get a proper, consistent read from the SPI flash, the RESET button needed to be held in order to get a proper read. To mitigate this, I soldered the CS line to the reset switch on the board (seen below) to do this automatically. 
+It should be noted for those that are trying to replicate this work, that in order to get a proper, consistent read from the SPI flash, the RESET button needed to be held in order to get a proper read. To mitigate this, I soldered the CS line to the reset switch on the board to do this automatically. 
 
 ## Background
 
-In the last post, we extracted the SPI flash, anc found what appears to be a slightly modified Rampage ROM for the NES, see the differences in the start menu below:
+In the last post, we extracted the SPI flash, and found what appears to be a slightly modified Rampage ROM for the NES, see the differences in the start menu below:
 
-START_MENU_DIFF
+START_MENU_DIFF.png
 
 However, the gameplay looks almost identical, which can also be seen below:
 
-GAMEPLAY_DIFF
+GAMEPLAY_DIFF.gif
 
 Given this information I had two questions
 
@@ -40,17 +40,17 @@ We saw before in the previous post that the first 30k appears to be a rough copy
 * Two player mode is nop'ed out in the binary
 * The CHR tables are slightly modified as is the copyright string on the start screen
 
-This appears to take up the first 0x30000 bytes of the SPI flash, but there is much more data than that contained in the dump we pulled, there is about 0x80000 byte total!
+This appears to take up the first 0x30000 bytes of the SPI flash, but there is much more data than that contained in the dump we pulled, there is about 0x80000 bytes total!
 
 What else could be in this flash image?
 
 Well for starters, the startup screen that can be seen below is not a part of the original NES ROM so that is most certainly taking up some space:
 
-STARTUP_SCREEN
+STARTUP_SCREEN.png
 
 And there is a test menu that can be entered by holding *Start* and *Up* on the cabinet while it is powering up, so that must be taking up some space as well!
 
-TEST_MENU
+TEST_MENU.png
 
 So there is likely some initial bootstrap code that is run that determines whether to jump into the debug menu or just go straight to the Rampage rom. 
 
@@ -66,6 +66,8 @@ Ok so now that we've identified how we think the flash might be laid out, what c
 
 ## NES ROM Structure Crash Course
 
+* *Disclaimer* A lot of this data was pulled from [NESDoc](http://www.nesdev.com/NESDoc.pdf) which is a phenomenal resource for anyone interested in the NES's internals!
+
 NES ROMs contain two types of data for the most part:
 
 * CHR-ROM: This is used to store sprites, tiles and background data, this data is processed by the Picture Processing Unit (PPU)
@@ -75,11 +77,13 @@ The CHR-ROM was addressable cia the PPU and the PRG-ROM was by the CPU. In order
 
 Note that the MOS6502 could address up 60 0xFFFF (16 bits of data). Two 16KB banks of that were used for storing the PRG-ROM (The game's code), at 0x8000 and 0xC000, see the memory map below pulled from the infamous NESDoc:
 
-NES_CPU_MEM_MAP
+NES_MEMORY_MAP.png
+
+![NES Memory Map](https://wrongbaud.github.io/assets/img/NES_MEMORY_MAP.png)
 
 The PPU only had 16K available for CHR-ROM data, and this can be seen below:
 
-PPU_MEM_MAP
+![PPU Memory Map](https://wrongbaud.github.io/assets/img/PPU_MEM_MAP.png)
 
 CHR-ROM would typically consist of the following structures:
 
@@ -94,6 +98,13 @@ CHR-ROM would typically consist of the following structures:
 ### Bank Switching Quick and Simple
 
 Essentialy, if a game wanted to map a different section of it's ROM (CHRor PRG) to be available to the NES, it would issue a command to a _mapper_ this was a memory mapped hardware device on the cartridge that served as an address translator for the NES. Changing these mapper values would alter what section of the PRG-ROM and CHR-ROM was being accessed by the NES. So for example, if you had three 16kb program banks total on your cartridge, you can only access two of those at a time given the hardware within the NES. In order to access this third bank, you would issue a command to the mapper, which would essentially swap out one PRG-ROM bank for the unused one. How this was implemented in software was entirely up to the developers - they used mappers as a way to increase the available program memory on the NES!
+
+This image is an example of how different memory _banks_ might be used, pulled from the wikipedia article linked below
+
+![Bank Switch](https://upload.wikimedia.org/wikipedia/commons/8/80/Bankswitch_memory_map.svg)
+
+[Check out the Wikipedia explanation for a more generalized example!](https://en.wikipedia.org/wiki/Bank_switching)
+
 
 ## Bootup Assumptions
 
@@ -112,6 +123,8 @@ wrongbaud@wubuntu:~/blog/cab-work/roms$
 ```
 
 YOSHIS_COOKIE.png
+
+![Yoshi's Cookie](https://wrongbaud.github.io/assets/img/YOSHIS.gif)
 
 It works and is fully playable!
 
@@ -158,31 +171,6 @@ So what happens if we remove 0x70000:0x70B00?
 
 This is the CHR table for the opening menu and the debug menu!
 
+## Conclusion
 
-ENDOFWRITEUP THESEE ARE NOTEZZZ
-
-Nametable for boot screen starts at 0x7D149
-
-Bootloader is at 0x7C000 (?)
-
-test menu at 0x74000 (?)
-
-CHR table at 0x70000 (?)
-
-0x40000 seems to be image size?
-
-0x70000 --> This  is the CHR table for the main bootloader! Modifying this changes the loading screen
-
-
-| Start Addr | End Addr | Content | 
-| ---------- | -------- | ------- | 
-| 0 | 0x30000 | Rampage Rom | 
-| 0x30000 | 0x40000 | Mirror of 0x20000:0x30000 |
-| 0x40000 | 0x60000 | (???) Removing this didn't seem to change anything |
-| 0x60000 | 0x70000 | CHR Table for first stage loader / test menu (?) | 
-| 0x70000 | 0x74000 | Also CHR table! | 
-| 0x74000 | 0x78000 | Unknown (possibly dev menu) |
-| 0x7C000 | 0x7FFFF | Initial loader? | 
-
-So it looks like we have two 16k program areas ...  
-
+So we now believe that we have a solid understanding of how the ROM  is structured we can load up the initial loader in Ghidra and start really digging into this! But in order to do that we're going to need a loader or at the very least a script to properly load the NES ROM!
