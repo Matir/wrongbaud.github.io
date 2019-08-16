@@ -47,9 +47,9 @@ $ qemu-system-arm \
 ```
 ## Building specialized images
 
-So this is a problem! We want to build a 3.10 kernel, however the oldest GCC toolchain that we can use to build the kernel with is GCC 5.0 which is _too NEW_ for our target. So we're going to need to find a way to set up our own toolchain and point buildroot to it if we want to move further with using GCC. 
-
-*Note:* If you want to use the uClib toolchain, that will in fact work perfectly fine in this scenario and you will not have to set up an external GCC toolchain, if you're trying to get something done quickly I'd reccomend this route!
+So this is a problem! We want to build a 3.10 kernel, however the oldest GCC toolchain that we can use to build the kernel with is GCC 5.0 which is _too NEW_ for our target. So we're going to need to find a way to set up our own toolchain and point buildroot to it if we want to move further with using GCC. I will try to cover this in another blog post once I find a more elegant solution than just pulling down older versions of buildroot!
 
 ## Conclusion
+
+Buildroot is an extremely useful tool both for embedded developers and for reverse engineers and allows one to quickly (depending on your workstation) generate kernel images, rootfs images and boot images to get a minimal Linux system up and running on your target platform!
 
