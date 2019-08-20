@@ -167,11 +167,7 @@ wine ~/.wine/drive_c/HIGHTEC/toolchains/tricore/v4.9.1.0-infineon-2.0/bin/tricor
 
 And we have a resulting ```a.out``` in our directory!
 
-So at this point, we've installed the HIGHTEC toolchain under WINE on Linux and can compile binaries for the TC1767 CPU, now our eventual goal is to develop code that will be used as a bootstrap loader and our target will not likely be able to load ELF files, so we'll need to write some linker scripts in order to make sure that the resulting ```.text``` section of the binary can be extracted and ran on the target. We will cover this in the next blog post!
-
-Initially when putting this post together, my plan was to use IDA-Pro to disassemble the binary and analyze what we've written to determine how efficient this HIGHTEC compiler is. The reason that I want to investigate this is that later on we will write our own Bootstrap code that will run on a target and we will want it to be as minimal as possible. 
-
-## Disassemble/Decompile the binary using GHIDRA
+Most of my experience with the Tricore Architecture is in the realm of reverse engineering. Up until recently, only IDA Pro could be used to disassembly Tricore binary files, however recently github user [mumbel](https://github.com/mumbel) recently submitted a Tricore processor module to Ghidra! We will spend the second part of this post building the latest version of Ghidra and checking out this new processor module. 
 
 ### Building / Installing GHIDRA
 
