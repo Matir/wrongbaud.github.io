@@ -245,6 +245,6 @@ With this post, we've set up a toolchain for Tricore CPUs under Linux, using thi
 ### Helpful Links
 
 * Tricore Example Code / Loaders (will be useful for later posts)
-  * [http://www.infineon-autoeco.com/BBS/Detail/6835]
-  * [http://bbs.21ic.com/archiver/tid-148660.html]
-  * [https://github.com/w01230/inf_tc1791_bootloader]
+  * [http://www.infineon-autoeco.com/BBS/Detail/6835](http://www.infineon-autoeco.com/BBS/Detail/6835)
+  * [http://bbs.21ic.com/archiver/tid-148660.html](http://bbs.21ic.com/archiver/tid-148660.html)
+  * [https://github.com/w01230/inf_tc1791_bootloader](https://github.com/w01230/inf_tc1791_bootloader)
