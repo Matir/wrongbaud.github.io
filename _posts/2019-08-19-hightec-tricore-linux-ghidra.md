@@ -171,13 +171,13 @@ Most of my experience with the Tricore Architecture is in the realm of reverse e
 
 ### Building / Installing GHIDRA
 
-In case you've not installed it yet, pull down the latest version of GHIDRA from: https://github.com/NationalSecurityAgency/ghidra
+In case you've not installed it yet, pull down the latest version of GHIDRA from: [github](https://github.com/NationalSecurityAgency/ghidra)
 
 Since we are targeting a Tricore processor, you will need to build the latest version of GHIDRA yourself,but [dukebarman](https://github.com/dukebarman) has made a very useful docker container for doing so!
 
 You can use the following docker container to build the latest version of GHIDRA: https://github.com/dukebarman/ghidra-builder
 
-I have fork here as well, which addresses and error I ran into when trying to build GHIDRA the first time: https://github.com/wrongbaud/ghidra-builder
+I have fork [here](https://github.com/wrongbaud/ghidra-builder) as well, which addresses and error I ran into when trying to build GHIDRA the first time
 
 To build GHIDRA using dukebarman's docker container do the following (this is also in the README):
 
@@ -245,6 +245,6 @@ With this post, we've set up a toolchain for Tricore CPUs under Linux, using thi
 ### Helpful Links
 
 * Tricore Example Code / Loaders (will be useful for later posts)
-  * http://www.infineon-autoeco.com/BBS/Detail/6835
-  * http://bbs.21ic.com/archiver/tid-148660.html
-  * https://github.com/w01230/inf_tc1791_bootloader
+  * [http://www.infineon-autoeco.com/BBS/Detail/6835]
+  * [http://bbs.21ic.com/archiver/tid-148660.html]
+  * [https://github.com/w01230/inf_tc1791_bootloader]
