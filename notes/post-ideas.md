@@ -1,20 +1,27 @@
 #  Post Ideas
 
 ## Hardware
-* Tricore BL Mode
 * ESP32 Flashrom Programmer
+* OSS Sata Analyzer
+* Sata HSS firmware analysis and extraction
 
 ## Software
 * Use unicorn to emulate and potentially fuzz a 3DS function of interest?
-* Tricore BL code
-* Buildroot
+* Unicorn on older GBA games?
+* Buildroot -- general usage
 
 ## RE
 * Ghidra NES Loader -- next in NES series
-* Tricore Processor Module (?)
 * Slay the Spire save state format (?)
+* 3DS Gundam APK reversing
+* GBA ROM Hacks (FF 1&2)
 
 ## VR/Exploit Stuff
 * Revisit Microcorruption
+* pwnable.kr
 
-
+## Tuning
+* Building payloads / linker scripts, etc
+* Tricore BL Mode
+* Tricore Bootstrap Code
+* Tricore Processor Module
