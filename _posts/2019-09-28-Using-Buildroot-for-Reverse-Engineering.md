@@ -2,7 +2,7 @@
 layout: post
 title:  "Using Buildroot for Reverse Engineering"
 image: ''
-date:   2019-07-30 00:06:31
+date:   2019-09-28 00:06:31
 tags:
 - embedded
 - linux
@@ -12,7 +12,7 @@ categories:
 - linux
 ---
 
-# Using Buildroot when Reverse Engineering
+# Using Buildroot for Reverse Engineering
 
 ## Overview
 
@@ -25,7 +25,7 @@ Buildroot is a collection of tools that can be used to build all of the necessar
 * Root Filesystem images, including busybox, etc
 * Ramdisk images
 
-The idea behind buildroot is that given a supported hardware target (or QEMU) one can build a specific version of the Linux kernel as well as a root filesystem image. Both of these can be customized to the user's liking but for the purposes of this post we're just goin that will run in QEMU as an example.
+The idea behind buildroot is that given a supported hardware target (or QEMU) one can build a specific version of the Linux kernel as well as a root file-system image. Both of these can be customized to the user's liking but for the purposes of this post we're just going that will run in QEMU as an example.
 
 ## Installing
 
@@ -35,7 +35,7 @@ First install the following dependencies (my host machine is Ubuntu 18.04):
 sudo apt-get install qemu-system-arm sed make binutils build-essential gcc g++ gzip bzip2 perl tar cpio python unzip rsync bc wget libncurses-dev
 ```
 
-Download the buildroot sourcecode from [here](https://buildroot.org/downloads/buildroot-2019.02.4.tar.gz)
+Download the buildroot source code from [here](https://buildroot.org/downloads/buildroot-2019.02.4.tar.gz)
 
 Unpack it
 
@@ -49,7 +49,7 @@ tar xvf buildroot-2019.02.4.tar
 wrongbaud@wubuntu:~/blog/buildroot$ cd buildroot-2019.02.4
 ```
 
-We're going to target the ARM Versatie PB board for qemu so use the following defconfig:
+We're going to target the ARM Versatile PB board for qemu so use the following defconfig:
 
 ```
 make qemu_arm_versatile_defconfig
@@ -59,7 +59,7 @@ Next, you can run menuconfig, and from this menu you can configure everything ab
 
 We'll change the banner of our system just to make sure that the changes take effect.
 
-![Buildroot Menconfig](https://wrongbaud.github.io/assets/img/BUILDROOT_MENUCONFIG.jpg)
+![Buildroot Menconfig](https://wrongbaud.github.io/assets/img/BUILDROOT_MENUCONFIG.png)
 
 Save your changes and exit, next make the images with the following command:
 
