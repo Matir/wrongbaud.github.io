@@ -18,7 +18,7 @@ categories:
 
 In previous posts, we've gone over how to tear down Arcade cabinets containing SPI Flash as well as how to dissect the data that was extracted from the Rom. With this next series of posts, I'd like to take the concepts we talked about on those platforms and demonstrate them on a more popular platform: The TP Link: $ROUTER_NUM. 
 
-With this post our goal will be to extract the firmware from the platform and locate and type of debugging if possible (UART,JTAG,etc). 
+With this post our goal will be to extract the firmware from the platform and locate and type of debugging if possible (UART,JTAG,etc). We will explore multiple ways of attempting to extract the filesystem and outline the steps taken for each method. 
 
 **Disclaimer:** I've done my best to not research this router on the internet, so I apologize if this is old information for those who look at these platforms. 
 
@@ -26,11 +26,13 @@ With this post our goal will be to extract the firmware from the platform and lo
 
 Below is a picture of the PCB after removing it from the case:
 
-ROUTER.png
+![Router PCB Board](https://wrongbaud.github.io/assets/img/ROUTER_PCB_COLORED.png)
 
 You can see the various SoCs highlighted  in red/yellow/green and the SRAM highlighted in blue, otherwise this is a very straightforward board. 
 
-The chip highlighted in yellow has the part number QCA9880, a quick google search returns the following: https://wikidevi.com/wiki/AIRETOS_AEX-QCA9880-NX
+The CPU is highlighted in yellow, it has the part number: QCA9563-AL3A, this is going to be the main CPU that we interract with. 
+
+The chip highlighted in red has the part number QCA9880, a quick google search returns the following: https://wikidevi.com/wiki/AIRETOS_AEX-QCA9880-NX 
 
 The SoC highlighted in green has the part number QCA8337N which is described in it's datasheet as "highly integrated seven-port Gigabit Ethernet switch"
 
@@ -39,9 +41,18 @@ On the underside of the board there is a serial EEPROM which looks strikingly si
 
 ### Dumping the SPI flash
 
-### Analyzing the flash dump
+As in previous posts, this platform contains a Winbond SPI chip. Knowing what we learned about flashrom, we can hook up a buspirate and attempt get a dump of the flash. The flash chip in question is the Winbone W25Q16Fw, the datasheet can be found here: https://www.winbond.com/resource-files/w25q16fw%20reve%2010072015%20sfdp.pdf
 
+Using the pinout from the diagram, we wire up a TSOP8 clip and connect it to the buspirate, and below are the results:
+
+```
+FLASHROM OUTPUT
+```
 ### Finding firmware online
+
+When looking at routers such as this, it's often very easy to find firmware online. I wanted to attempt to extract the SPI flash because that's more in my wheelhouse being an embedded systems guy. However - the simpler path would be to go to the following link where we can find an update image! However, the ability to re-write the SPI flash can be useful in case we manage to brick the platform in the future!
+
+Sure enough, googling the router name takes us to the following link where the firmware can be downloaded: https://static.tp-link.com/2019/201908/20190827/Archer%20A7(US)_V5_190810.zip
 
 ### Looking For Serial
 
@@ -86,3 +97,8 @@ This is all great information, but in practice what does it mean for us reverse 
 |  4  |   X   |
 
 The Tx line is typically held high in most reference designs, so we have 2 possible candidates for Tx.
+
+## Analyzing the FS Image / SPI Dump
+
+## Next Steps
+Now that we have the filesystem image and an active console we can focus on setting up a debug environment and hunting for any potential issues that may be present on the platform!
