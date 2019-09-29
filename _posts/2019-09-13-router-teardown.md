@@ -48,11 +48,18 @@ Using the pinout from the diagram, we wire up a TSOP8 clip and connect it to the
 ```
 FLASHROM OUTPUT
 ```
+
+It looks like we're having some issues doing this in circuit, looking at the lines with a scope, it appears that the BusPirate can not drive the lines appropriately. This is a common issue with trying to do any kind of in circuit reads, in order to mitigate this one can look for a reset line for the main CPU, or attempt to get the CPU into a state where it is still powering the chip but not attempting to communicate. But -- since I'm a little lazy, let's just remove it with hot air and dump it, see the pictures below and the output of binwalk on the flash image!
+
+So we've succesfully dumped the flash, mainly due to me being stubborn and wanting to demonstrate some soldering, but as most of you probbly know, these firmware images are typically obtainable online which we will discuss next!
+
 ### Finding firmware online
 
 When looking at routers such as this, it's often very easy to find firmware online. I wanted to attempt to extract the SPI flash because that's more in my wheelhouse being an embedded systems guy. However - the simpler path would be to go to the following link where we can find an update image! However, the ability to re-write the SPI flash can be useful in case we manage to brick the platform in the future!
 
 Sure enough, googling the router name takes us to the following link where the firmware can be downloaded: https://static.tp-link.com/2019/201908/20190827/Archer%20A7(US)_V5_190810.zip
+
+One should note however, that these firmware images contain the root filesystem of the target and not the bootloader, which is something we would be interested in if we were to attempt to port another OS or image to this platform potentially, so there is _some_ validation for dumping the SPI flash!
 
 ### Looking For Serial
 
@@ -66,13 +73,14 @@ Of course some systems only give access to Tx and other have no access at all, b
 
 So what do headers look like? What are vias? Below are some example images of what they typically look like and after looking at these you'll notice something very similar on our board!
 
-EXAMPLE_1.png
+![EXAMPLE_1](https://wrongbaud.github.io/assets/img/CENT_BOARD.jpeg)
 
-EXAMPLE_2.png
+![EXAMPLE_1](https://wrongbaud.github.io/assets/img/CENT_BOARD.png)
+
 
 Looking ar our board we can see some headers that look very similar, now we need to inspect them, but first it might help to learn a little more about what a UART actually is!
 
-SERIAL_BOARD.png
+![SERIAL_1](https://wrongbaud.github.io/assets/img/SERIAL_1.jpg)
 
 #### UWAT? What is a UART?
 
@@ -91,14 +99,34 @@ This is all great information, but in practice what does it mean for us reverse 
 
 | Pin | Value | 
 | --- | ----- |
-|  1  |   X   | 
-|  2  |   X   | 
-|  3  |   X   | 
-|  4  |   X   |
+|  1  |   3.3V   | 
+|  2  |   0 (GND)   | 
+|  3  |   0   | 
+|  4  |   3.3V   |
 
-The Tx line is typically held high in most reference designs, so we have 2 possible candidates for Tx.
+The Tx line is typically held high in most reference designs by whoever is driving it, AKA transmitting. We have 2 possible candidates for Tx. Pins 1-3. There is a good chance that one of these is our 3.3V VCC line, we can determine that by noticing the pin's behaiour when the platform is powered down. If it is a fast drop to 0V we can assume that it is a GPIO line of some sort, if it slowly drops down to 0V, it is likely the VCC line because that slow drop is caused by capacitors that are often present on power rails! After looking at these pins on shutdown we can assume that pin 1 is VCC, leaving one candidate for standard Tx, pin 4! 
+
+Also note that we talked about how it's often up to the transmitter to drive the line high, which would mean that the Rx line (whic we would Transmit to) is likely pin 3 because it's 0V and not connected to ground!
+
+When we look at this under the scope - there is no traffic or fluctuation whatsoever. However, take a second look at the photo and noice the pads labeled ```R24``` these pads indicate that a SMD resistor was here at some point in time and removed pre-production. Often times when looking at things like serial ports or JTAG connectors, there will be signs of resistors or other components being removed as these features are no longer needed once the device is in production. Let's probe the left side of that pad and see what it looks like with the logic analyzer.
+
+![LOGIC_1](https://wrongbaud.github.io/assets/img/LOGIC_1.jpg)
+
+Excellent! This is a serial terminal that drops us to a root shell, we could not have asked for more in this scenario. Let's take a look at the full serial dump:
+
+```
+SERIAL DUMP GOES HERE
+```
+
+In order to make this a more usable shell, I applied a solder blob bridging the two pads of the R24 connector. Note that some times in this scenario that one of the pads may be pulling the serial line up to the proper voltage, but since our voltage levels look normal on the multimeter and on the logic analyzer we can just use a solder blob. Now the header contains a functioning serial port!
 
 ## Analyzing the FS Image / SPI Dump
 
+I showed before the binwalk output of the SPI dump. This showed us that on the SPI flash we have the UBoot image (Stage 2 bootloader) the kernel and the rootfs. This is everything we need to start poking around at the files running on the platform. 
+
 ## Next Steps
 Now that we have the filesystem image and an active console we can focus on setting up a debug environment and hunting for any potential issues that may be present on the platform!
+
+#### Image References
+* https://harryskon.wordpress.com/category/reverse-engineering/
+* http://thecablemodemguide.tripod.com/page38.htm
