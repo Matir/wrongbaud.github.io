@@ -46,10 +46,54 @@ As in previous posts, this platform contains a Winbond SPI chip. Knowing what we
 Using the pinout from the diagram, we wire up a TSOP8 clip and connect it to the buspirate, and below are the results:
 
 ```
-FLASHROM OUTPUT
+wrongbaud@wubuntu:~$ sudo flashrom -p buspirate_spi:dev=/dev/ttyUSB0 -r router.bin
+[sudo] password for malt:
+flashrom p1.0-131-g3a41e2a on Linux 4.15.0-64-generic (x86_64)
+flashrom is free software, get the source code at https://flashrom.org
+
+Using clock_gettime for delay loops (clk_id: 1, resolution: 1ns).
+Bus Pirate firmware 6.1 and older does not support SPI speeds above 2 MHz. Limiting speed to 2 MHz.
+It is recommended to upgrade to firmware 6.2 or newer.
+No EEPROM/flash device found.
+Note: flashrom can never write if the flash chip isn't found automatically.
 ```
 
 It looks like we're having some issues doing this in circuit, looking at the lines with a scope, it appears that the BusPirate can not drive the lines appropriately. This is a common issue with trying to do any kind of in circuit reads, in order to mitigate this one can look for a reset line for the main CPU, or attempt to get the CPU into a state where it is still powering the chip but not attempting to communicate. But -- since I'm a little lazy, let's just remove it with hot air and dump it, see the pictures below and the output of binwalk on the flash image!
+
+```
+wrongbaud@wubuntu:~$ sudo flashrom -p buspirate_spi:dev=/dev/ttyUSB0 -r router.bin
+[sudo] password for wrongbaud: 
+flashrom p1.0-131-g3a41e2a on Linux 4.15.0-64-generic (x86_64)
+flashrom is free software, get the source code at https://flashrom.org
+
+Using clock_gettime for delay loops (clk_id: 1, resolution: 1ns).
+Bus Pirate firmware 6.1 and older does not support SPI speeds above 2 MHz. Limiting speed to 2 MHz.
+It is recommended to upgrade to firmware 6.2 or newer.
+Found Winbond flash chip "W25Q128.V" (16384 kB, SPI) on buspirate_spi.
+Reading flash... done.
+```
+
+```
+wrongbaud@wubuntu:~$ binwalk router.bin 
+
+DECIMAL       HEXADECIMAL     DESCRIPTION
+--------------------------------------------------------------------------------
+14544         0x38D0          U-Boot version string, "U-Boot 1.1.4-g14abe3ec-dirty (Aug 10 2018 - 16:06:32)"
+14608         0x3910          CRC32 polynomial table, big endian
+15904         0x3E20          uImage header, header size: 64 bytes, header CRC: 0x3F646F1, created: 2018-08-10 08:06:33, image size: 64400 bytes, Data Address: 0x80010000, Entry Point: 0x80010000, data CRC: 0xD54D7D12, OS: Linux, CPU: MIPS, image type: Firmware Image, compression type: lzma, image name: "u-boot image"
+15968         0x3E60          LZMA compressed data, properties: 0x5D, dictionary size: 8388608 bytes, uncompressed size: 170372 bytes
+144736        0x23560         U-Boot version string, "U-Boot 1.1.4-g14abe3ec-dirty (Aug 10 2018 - 16:05:04)"
+144800        0x235A0         CRC32 polynomial table, big endian
+146092        0x23AAC         uImage header, header size: 64 bytes, header CRC: 0x2C065C9E, created: 2018-08-10 08:05:05, image size: 40175 bytes, Data Address: 0x80010000, Entry Point: 0x80010000, data CRC: 0x5320B497, OS: Linux, CPU: MIPS, image type: Firmware Image, compression type: lzma, image name: "u-boot image"
+146156        0x23AEC         LZMA compressed data, properties: 0x5D, dictionary size: 8388608 bytes, uncompressed size: 95068 bytes
+262144        0x40000         uImage header, header size: 64 bytes, header CRC: 0x745A02C, created: 2018-10-26 09:44:43, image size: 1084069 bytes, Data Address: 0x80060000, Entry Point: 0x80060000, data CRC: 0x30233E01, OS: Linux, CPU: MIPS, image type: Multi-File Image, compression type: lzma, image name: "MIPS OpenWrt Linux-3.3.8"
+262216        0x40048         LZMA compressed data, properties: 0x6D, dictionary size: 8388608 bytes, uncompressed size: 3155824 bytes
+1441792       0x160000        Squashfs filesystem, little endian, version 4.0, compression:xz, size: 14504422 bytes, 1909 inodes, blocksize: 65536 bytes, created: 2018-12-10 02:37:18
+16105480      0xF5C008        XML document, version: "1.0"
+16121864      0xF60008        gzip compressed data, from Unix, last modified: 2018-12-10 07:03:02
+16187400      0xF70008        gzip compressed data, maximum compression, from Unix, last modified: 2018-12-10 11:00:01
+```
+
 
 So we've succesfully dumped the flash, mainly due to me being stubborn and wanting to demonstrate some soldering, but as most of you probbly know, these firmware images are typically obtainable online which we will discuss next!
 
@@ -123,6 +167,41 @@ In order to make this a more usable shell, I applied a solder blob bridging the 
 ## Analyzing the FS Image / SPI Dump
 
 I showed before the binwalk output of the SPI dump. This showed us that on the SPI flash we have the UBoot image (Stage 2 bootloader) the kernel and the rootfs. This is everything we need to start poking around at the files running on the platform. 
+
+As we can see from the binwalk output, the image contains 3 uImages, two of which are actual U-Boot bootloader images, while the third is the compressed kernel image. After the compressed kernel uImage we have a SquashFS filesystem, this is what will hold most of the data that we are intersted in. We can extract it from the image with ```dd``` as shown below:
+
+```
+wrongbaud@wubuntu:~$ dd if=router.bin skip=1441792 bs=1 count=14663688 of=squashfs.bin
+14663688+0 records in
+14663688+0 records out
+14663688 bytes (15 MB, 14 MiB) copied, 24.8948 s, 589 kB/s
+wrongbaud@wubuntu:~$ file squashfs.bin 
+squashfs.bin: Squashfs filesystem, little endian, version 4.0, 14504422 bytes, 1909 inodes, blocksize: 65536 bytes, created: Mon Dec 10 02:37:18 2018
+```
+
+Now we can use binwalk to extract the SquashFS image, we could also mount this as a loopback device to get the same result!
+
+```
+wrongbaud@wubuntu:~$ binwalk -e squashfs.bin 
+
+DECIMAL       HEXADECIMAL     DESCRIPTION
+--------------------------------------------------------------------------------
+0             0x0             Squashfs filesystem, little endian, version 4.0, compression:xz, size: 14504422 bytes, 1909 inodes, blocksize: 65536 bytes, created: 2018-12-10 02:37:18
+
+wrongbaud@wubuntu:~$ ls
+ 010editor               cano         Downloads        'Launch Hexagon IDE'   Public         _squashfs.bin.extracted   travel
+ Android                 containers   EAGLE             Music                 Qualcomm       STM32Cube                 tweaks
+ android-studio          core         esp               node_modules          router         STM32CubeIDE              Videos
+ AndroidStudioProjects   Desktop      ghidra            other                 sketchbook     STM32CubeMX               vmware
+ Arduino                 dev          ghidra_projects   p4.bin                snap           Templates                 wat.sh
+ bin                     Documents    ghidra_scripts    Pictures              squashfs.bin   tools                     workshop
+wrongbaud@wubuntu:~$ cd _squashfs.bin.extracted/
+wrongbaud@wubuntu:~/_squashfs.bin.extracted$ ls
+0.squashfs  squashfs-root
+wrongbaud@wubuntu:~/_squashfs.bin.extracted$ cd squashfs-root/
+wrongbaud@wubuntu:~/_squashfs.bin.extracted/squashfs-root$ ls
+bin  dev  etc  lib  mnt  overlay  proc  rom  root  sbin  sys  tmp  usr  var  www
+```
 
 ## Next Steps
 Now that we have the filesystem image and an active console we can focus on setting up a debug environment and hunting for any potential issues that may be present on the platform!
