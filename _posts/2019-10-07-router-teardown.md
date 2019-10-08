@@ -26,23 +26,23 @@ With this post our goal will be to extract the firmware from the platform and lo
 
 Below is a picture of the PCB after removing it from the case:
 
-![Router PCB Board](https://wrongbaud.github.io/assets/img/ROUTER_PCB_COLORED.png)
+![Router PCB Board](https://wrongbaud.github.io/assets/img/ROUTER_PCB_COLORED.jpg)
 
 You can see the various SoCs highlighted  in red/yellow/green and the SRAM highlighted in blue, otherwise this is a very straightforward board. 
 
 The CPU is highlighted in yellow, it has the part number: QCA9563-AL3A, this is going to be the main CPU that we interact with. 
 
-The chip highlighted in red has the part number QCA9880, a quick Google search returns the following: https://wikidevi.com/wiki/AIRETOS_AEX-QCA9880-NX 
+The chip highlighted in red has the part number QCA9880, a quick Google search returns the following [wiki page](https://wikidevi.com/wiki/AIRETOS_AEX-QCA9880-NX)
 
 The SoC highlighted in green has the part number QCA8337N which is described in it's data sheet as "highly integrated seven-port Gigabit Ethernet switch"
 
-On the underside of the board there is a serial EEPROM which looks strikingly similar to those that we extracted on the Arcade cabinets in the previous posts. The EEPROM is the small black 8 pin chip in the center of the board!
+On the underside of the board there is a serial EEPROM which looks strikingly similar to those that we extracted on the Arcade cabinets in the previous posts. The EEPROM is the small black 8 pin chip in the center of the board.
 
-![Router PCB EEPROM](https://wrongbaud.github.io/assets/img/ROUTER_UNDERSIDE.png)
+![Router EEPROM Pads](https://wrongbaud.github.io/assets/img/ROUTER_UNDERSIDE.jpg)
 
 ### Dumping the SPI flash
 
-As in previous posts, this platform contains a Winbond SPI chip. Knowing what we learned about flashrom, we can hook up a buspirate and attempt get a dump of the flash. The flash chip in question is the Winbond W25Q16Fw, the data sheet can be found here: https://www.winbond.com/resource-files/w25q16fw%20reve%2010072015%20sfdp.pdf
+As in previous posts, this platform contains a Winbond SPI chip. Knowing what we learned about flashrom, we can hook up a buspirate and attempt get a dump of the flash. The flash chip in question is the Winbond W25Q16Fw, the data sheet can be found [here](https://www.winbond.com/resource-files/w25q16fw%20reve%2010072015%20sfdp.pdf)
 
 Using the pin-out from the diagram, we wire up a TSOP8 clip and connect it to the buspirate, and below are the results:
 
@@ -61,7 +61,7 @@ Note: flashrom can never write if the flash chip isn't found automatically.
 
 It looks like we're having some issues doing this in circuit, looking at the lines with a scope, it appears that the BusPirate can not drive the lines appropriately. After further investigation I found that the Chip Select line was not being pulled low enough, after trying a few various pull-down resistors I decided to move on from reading it in circuit. This is a common issue with trying to do any kind of in circuit reads, in order to mitigate this one can look for a reset line for the main CPU, or attempt to get the CPU into a state where it is still powering the chip but not attempting to communicate. But -- since I'm a little lazy, let's just remove it with hot air and dump it, see the pictures below and the output of binwalk on the flash image!
 
-![Router PCB EEPROM](https://wrongbaud.github.io/assets/img/REMOVED_EEPROM.png)
+![Removed EEPROM](https://wrongbaud.github.io/assets/img/REMOVED_EEPROM.jpg)
 
 ```
 wrongbaud@wubuntu:~$ sudo flashrom -p buspirate_spi:dev=/dev/ttyUSB0 -r router.bin
@@ -157,7 +157,7 @@ Also note that we talked about how it's often up to the transmitter to drive the
 
 When we look at this under the scope - there is no traffic or fluctuation whatsoever. However, take a second look at the photo and notice the pads labeled ```R24``` these pads indicate that a SMD resistor was here at some point in time and removed pre-production. Often times when looking at things like serial ports or JTAG connectors, there will be signs of resistors or other components being removed as these features are no longer needed once the device is in production. Let's probe the left side of that pad and see what it looks like with the logic analyzer. 
 
-![LOGIC_1](https://wrongbaud.github.io/assets/img/SALEAE_LOGIC.jpg)
+![LOGIC_1](https://wrongbaud.github.io/assets/img/SALEAE_LOGIC.png)
 
 As you can see from the output of the serial analyzer, we see the string ```U-Boot```, meaning we've found our Tx line. After hooking this up to an FTDI we determine that this is a serial terminal that drops us to a root shell, we could not have asked for more in this scenario. Let's take a look at the full serial dump:
 
@@ -369,8 +369,11 @@ bin  dev  etc  lib  mnt  overlay  proc  rom  root  sbin  sys  tmp  usr  var  www
 Through this initial hardware analysis we've found 3 ways to get an image of the flash used on the platform:
 
 1.) Researching the platform online (obviously the best place to start in this scenario)
+
 2.) Extracting the SPI Flash
+
 3.) Copying files via the debug console
+
 
 Hopefully by outlining some of these steps, you'll have the knowledge to hunt for serial ports and find/enable consoles on platforms you are analyzing
 
