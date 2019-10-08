@@ -63,6 +63,10 @@ It looks like we're having some issues doing this in circuit, looking at the lin
 
 ![Removed EEPROM](https://wrongbaud.github.io/assets/img/REMOVED_EEPROM.jpg)
 
+
+![Removed EEPROM](https://wrongbaud.github.io/assets/img/BUSPIRATE_EEPROM.jpg)
+
+
 ```
 wrongbaud@wubuntu:~$ sudo flashrom -p buspirate_spi:dev=/dev/ttyUSB0 -r router.bin
 [sudo] password for wrongbaud: 
@@ -102,11 +106,11 @@ So we've successfully dumped the flash, mainly due to me being stubborn and want
 
 ### Finding firmware online
 
-When looking at routers such as this, it's often very easy to find firmware online. I wanted to attempt to extract the SPI flash because that's more in my wheelhouse being an embedded systems guy. However - the simpler path would be to go to the following link where we can find an update image! However, the ability to re-write the SPI flash can be useful in case we manage to brick the platform in the future!
+When looking at routers such as this, it's often very easy to find firmware online. I wanted to attempt to extract the SPI flash because that's more in my wheelhouse being an embedded systems guy. However - the simpler path would be to go to the following link where we can find an update image! However, the ability to re-write the SPI flash can be useful in case we manage to brick the platform in the future.
 
-Sure enough, googling the router name takes us to the following link where the firmware can be downloaded: https://static.tp-link.com/2019/201908/20190827/Archer%20A7(US)_V5_190810.zip
+Sure enough, googling the router name takes us to the following link where the [firmware can be downloaded](https://static.tp-link.com/2019/201908/20190827/Archer%20A7(US)_V5_190810.zip)
 
-One should note however, that these firmware images contain the root filesystem of the target and not the bootloader, which is something we would be interested in if we were to attempt to port another OS or image to this platform potentially, so there is _some_ validation for dumping the SPI flash!
+One should note however, that these firmware images contain the root filesystem of the target and not the bootloader, which is something we would be interested in if we were to attempt to port another OS or image to this platform potentially, so there is _some_ validation for dumping the SPI flash.
 
 ### Looking For Serial
 
@@ -118,13 +122,13 @@ Of course some systems only give access to Tx and other have no access at all, b
 2. Silk screen labeling
 3. Unused pads / jumpers on the PCB
 
-So what do headers look like? What are vias? Below are some example images of what they typically look like and after looking at these you'll notice something very similar on our board!
+So what do headers look like? What are vias? Below are some example images of what they typically look like and after looking at these you'll notice something very similar on our board
 
 ![EXAMPLE_1](https://wrongbaud.github.io/assets/img/EXAMPLE_1.jpeg)
 
 ![EXAMPLE_1](https://wrongbaud.github.io/assets/img/EXAMPLE_2.png)
 
-Looking at our board we can see some headers that look very similar, now we need to inspect them, but first it might help to learn a little more about what a UART actually is!
+Looking at our board we can see some headers that look very similar, now we need to inspect them, but first it might help to learn a little more about what a UART actually is
 
 ![SERIAL_1](https://wrongbaud.github.io/assets/img/SERIAL_1.jpg)
 
@@ -317,13 +321,13 @@ MMMM$ ,MMMMM  MMMMM  MMMM    MMM       MMMM   MMMMM   MMMM    MMMM
 root@ArcherA7v5:/# 
 ```
 
-In order to make this a more usable shell, I applied a solder blob bridging the two pads of the R24 connector. Note that some times in this scenario that one of the pads may be pulling the serial line up to the proper voltage, but since our voltage levels look normal on the multimeter and on the logic analyzer we can just use a solder blob. Now the header contains a functioning serial port!
+In order to make this a more usable shell, I applied a solder blob bridging the two pads of the R24 connector. Note that some times in this scenario that one of the pads may be pulling the serial line up to the proper voltage, but since our voltage levels look normal on the multimeter and on the logic analyzer we can just use a solder blob. Now the header contains a functioning serial port
 
 Using this serial port, we can insert a flash drive and take an image of the filesystem using dd:
 
 ```dd if=/dev/mtdblockX of=/mnt/usbdisk/mtdblockX.bin```
 
-You could also just copy the files off with ```cp``` whatever you'd prefer!
+You could also just copy the files off with ```cp``` whatever you'd prefer
 
 ## Analyzing the FS Image / SPI Dump
 
@@ -340,7 +344,7 @@ wrongbaud@wubuntu:~$ file squashfs.bin
 squashfs.bin: Squashfs filesystem, little endian, version 4.0, 14504422 bytes, 1909 inodes, blocksize: 65536 bytes, created: Mon Dec 10 02:37:18 2018
 ```
 
-Now we can use binwalk to extract the SquashFS image, we could also mount this as a loopback device to get the same result!
+Now we can use binwalk to extract the SquashFS image, we could also mount this as a loopback device to get the same result
 
 ```
 wrongbaud@wubuntu:~$ binwalk -e squashfs.bin 
@@ -378,7 +382,7 @@ Through this initial hardware analysis we've found 3 ways to get an image of the
 Hopefully by outlining some of these steps, you'll have the knowledge to hunt for serial ports and find/enable consoles on platforms you are analyzing
 
 ## Next Steps
-Now that we have the filesystem image and an active console we can focus on setting up a debug environment and hunting for any potential issues that may be present on the platform!
+Now that we have the filesystem image and an active console we can focus on setting up a debug environment and hunting for any potential issues that may be present on the platform
 
 #### Image References
 * https://harryskon.wordpress.com/category/reverse-engineering/
