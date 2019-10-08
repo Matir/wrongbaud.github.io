@@ -59,13 +59,14 @@ No EEPROM/flash device found.
 Note: flashrom can never write if the flash chip isn't found automatically.
 ```
 
-It looks like we're having some issues doing this in circuit, looking at the lines with a scope, it appears that the BusPirate can not drive the lines appropriately. After further investigation I found that the Chip Select line was not being pulled low enough, after trying a few various pull-down resistors I decided to move on from reading it in circuit. This is a common issue with trying to do any kind of in circuit reads, in order to mitigate this one can look for a reset line for the main CPU, or attempt to get the CPU into a state where it is still powering the chip but not attempting to communicate. But -- since I'm a little lazy, let's just remove it with hot air and dump it, see the pictures below and the output of binwalk on the flash image!
+It looks like we're having some issues doing this in circuit, looking at the lines with a scope, it appears that the BusPirate can not drive the lines appropriately. After further investigation I found that the Chip Select line was not being pulled low enough, after trying a few various pull-down resistors I decided to move on from reading it in circuit. This is a common issue with trying to do any kind of in circuit reads, in order to mitigate this one can look for a reset line for the main CPU, or attempt to get the CPU into a state where it is still powering the chip but not attempting to communicate. But -- since I'm a little lazy, let's just remove it with hot air and dump it, see the pictures below and the output of binwalk on the flash image
 
 ![Removed EEPROM](https://wrongbaud.github.io/assets/img/REMOVED_EEPROM.jpg)
 
 
 ![Removed EEPROM](https://wrongbaud.github.io/assets/img/BUSPIRATE_EEPROM.jpg)
 
+Now that we have removed the EEPROM, we see more positive results with flashrom, which is to be expected.
 
 ```
 wrongbaud@wubuntu:~$ sudo flashrom -p buspirate_spi:dev=/dev/ttyUSB0 -r router.bin
@@ -79,6 +80,8 @@ It is recommended to upgrade to firmware 6.2 or newer.
 Found Winbond flash chip "W25Q128.V" (16384 kB, SPI) on buspirate_spi.
 Reading flash... done.
 ```
+
+Running [binwalk](https://github.com/ReFirmLabs/binwalk) on the resulting image produces the following:
 
 ```
 wrongbaud@wubuntu:~$ binwalk router.bin 
@@ -102,7 +105,7 @@ DECIMAL       HEXADECIMAL     DESCRIPTION
 ```
 
 
-So we've successfully dumped the flash, mainly due to me being stubborn and wanting to demonstrate some soldering, but as most of you probably know, these firmware images are typically obtainable online which we will discuss next!
+This looks promising, the SPI flash contains two [U-Boot](https://www.denx.de/wiki/U-Boot) images, a Linux Kernel as well as a [SquashFS filesystem](http://tldp.org/HOWTO/SquashFS-HOWTO/whatis.html), this is all fairly standard when looking at platform like this so at this point we can assume we've successfully dumped the flash, but as most of you probably know, these firmware images are typically obtainable online which we will discuss next.
 
 ### Finding firmware online
 
