@@ -56,9 +56,41 @@ TIMING_DIAGRAM
 
 Alright so we have a rough outline of how to perform read operations on the chip, nothing horribly complicated, aside from the amount of pins needed! So next you're probably wondering, "How on earth are we going to extract information from this chip when we need so many data lines!?" Well, luckily for us there are a number of ways that we can use external ICs (integrated circuits) to expand the amount of IO pins that we can use!
 
-### Understanding I2C
-
 ### Dumping the Parallel flash with an ESP32
+
+For this post, we're going to dump this flash using the ESP32 microcontroller, this is a very popular and well supported MCU that plenty of embedded peripherals as well as a wireless SoC that can be used for Bluetooth and WiFi comms. Below is a link to the develoment board we'll be using as well as a pinout.
+
+https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf
+
+ESP32.png
+
+http://ww1.microchip.com/downloads/en/devicedoc/20001952c.pdf
+
+In order to expand out IO capabilities to be able to interract with this flash chip we are going to use an I2C based IO expander chip called the MCP23017. This chip, as the name suggests, can be communicated with I2C and can be configured to read or write to 16 individual GPIO pins. This means, that be using 2 I2C pins on the ESP32 (SDA, SCL), we'll gain 16 IO lines. We can also put multiple MCP23017 chips on the same I2C bus meaning that we will be able to interract with 48 pins just using I2C on the ESP32! Before we get involved with how this particular chip works, we will provide a brief overview of I2C for the unfamiliar.
+
+#### Understanding I2C
+
+In previous posts, we discussed UART and SPI, these two protocols are somewhat limited when it comes to addressing mutliple devices at once. For example, UART has no selection or addressing capability, and SPI requires the CS line to be pulled low which will quickly start to eat up GPIO lines with using multiple SPI chips on the same board. 
+
+I2C uses two lines for communication Serial Data (SDA) and Clock (SCL). I2C is similar to SPI in that is synchronous, with the sampling being based on the SCL signal. Where I2C really begins to set itself apart from SPI is the ability to address certain chips on the bus within the I2C message frame. A brief overview of the message structure can be seen below:
+
+| Start Condition | Address Frame | R/W Bit | ACK/NACK | Data Frame | ACK/NACK | Data Frame 2 | ACK/NACK | Stop Bit |
+| --------------- | ------------- | ------- | -------- | ---------- | -------- | ------------ | -------- | -------- | 
+| 1 Bit (H->L Transition) | 7 or 10 bits | 1 bit | 1 bit | 8 bits | 1 bit | 8 bites | 1 bit | 1 bit |
+
+The address for an I2C slave is typically controlled by assering IO lines on the chip. For example on the MCP23017 chip pins 15:17 control the lower bits of the address variable. 
+
+The R/W bit (read / write) is fairly self explanatory, the usage of reads / writes are chip dependent. For example you may write to a register of an I2C based sensor in order to configure or initialize it, after that you would read the data from it. We'll need to read and write from the MCP23017 chips in order to properly dump the parallel flash chip so we will see uses of both shortly. 
+
+See the example be low from the Sparkfun I2C tutorial for a better explanation!
+
+https://cdn.sparkfun.com/assets/6/4/7/1/e/51ae0000ce395f645d000000.png
+
+#### Interfacting with the MCP23017
+
+The MCp23017 has a series of internal registers that are used to configure the state and direction of the 16 GPIO lines. 
+
+#### Dumping the Flash using the MCP23017
 
 ### Analyzing the ROM
 
