@@ -23,12 +23,12 @@ One thing that is important to note is that unlike the previous cabinets that we
 
 Taking a look at the PCB, you'll notice that something is _very_ different than the other boards. Instead of an 8 pin SPI flash, we have a much larger chip with many more pins. This is a parallel flash chip, and it operates in a different manner than the SPI flash chips that we've extracted previously, lets start by explaining how parallel flash chips work.
 
-boardlayout.jpg
+![Board Layout](https://wrongbaud.github.io/assets/img/mk-post/boardlayout.jpg)
 
 ## Understanding Parallel Flash
 Parallel flash chips are very different than the storage mediums we've looked at in the past. They have individual address and data lines that are used to access certain addresses on the chip. See the pinout below from the relevant datasheet for this chip:
 
-flash.jpg
+![Flash Pinout](https://wrongbaud.github.io/assets/img/mk-post/FLASH_PINOUT.png)
 
 Let's start by pointing out the pins that are most important for doing a simple chip readout accoridng to the datasheet:
 
@@ -43,16 +43,16 @@ Unrelated: I would highly reccomend you read along with the datasheet open, havi
 | A0:A21 / Address Pins | These pins are all used to determine what address to read or write to based on the state of the flash chip | 
 | D0:D16 / Data Pins | These are used to input or output data based on the state of the chip | 
 
-In order to perform a read operation, the following things must be done in order
+In order to perform a read operation, the following things should be done in order
 
-1. Write the address to be read on the address lines A0:AX
-2. Pull CE (chip enable) to GND
+1. Pull CE (chip enable) to GND
+2. Write the address to be read on the address lines A0:AX
 3. Pull OE (output enable) to GND
 4. Read the bytes (or byte depending on the state of the BYTE pin) on the D0:D16 lines
 
 Note that all of these things have to be done within an appropriate time window that is outlined in the diagram below from the datasheet:
 
-TIMING_DIAGRAM
+![Timing Diagram](https://wrongbaud.github.io/assets/img/mk-post/timing-diagram.png)
 
 Alright so we have a rough outline of how to perform read operations on the chip, nothing horribly complicated, aside from the amount of pins needed! So next you're probably wondering, "How on earth are we going to extract information from this chip when we need so many data lines!?" Well, luckily for us there are a number of ways that we can use external ICs (integrated circuits) to expand the amount of IO pins that we can use!
 
@@ -62,7 +62,7 @@ For this post, we're going to dump this flash using the ESP32 microcontroller, t
 
 https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf
 
-ESP32.png
+![Timing Diagram](https://wrongbaud.github.io/assets/img/mk-post/ESP32.png)
 
 http://ww1.microchip.com/downloads/en/devicedoc/20001952c.pdf
 
@@ -78,23 +78,156 @@ I2C uses two lines for communication Serial Data (SDA) and Clock (SCL). I2C is s
 | --------------- | ------------- | ------- | -------- | ---------- | -------- | ------------ | -------- | -------- | 
 | 1 Bit (H->L Transition) | 7 or 10 bits | 1 bit | 1 bit | 8 bits | 1 bit | 8 bites | 1 bit | 1 bit |
 
-The address for an I2C slave is typically controlled by assering IO lines on the chip. For example on the MCP23017 chip pins 15:17 control the lower bits of the address variable. 
+The address for an I2C slave is typically controlled by assering IO lines on the chip. For example on the MCP23017 chip pins 15:17 control the lower bits of the address variable. We will use these to allow us to have 3 MCP chips on the I2C bus connected to the ESP32, using addresses ```0x20```,```0x21``` and ```0x22```
 
 The R/W bit (read / write) is fairly self explanatory, the usage of reads / writes are chip dependent. For example you may write to a register of an I2C based sensor in order to configure or initialize it, after that you would read the data from it. We'll need to read and write from the MCP23017 chips in order to properly dump the parallel flash chip so we will see uses of both shortly. 
 
 See the example be low from the Sparkfun I2C tutorial for a better explanation!
 
-https://cdn.sparkfun.com/assets/6/4/7/1/e/51ae0000ce395f645d000000.png
+![I2C Diagram](https://cdn.sparkfun.com/assets/6/4/7/1/e/51ae0000ce395f645d000000.png)
 
 #### Interfacting with the MCP23017
 
-The MCp23017 has a series of internal registers that are used to configure the state and direction of the 16 GPIO lines. 
+The MCP23017 has a series of internal registers that are used to configure the state and direction of the 16 GPIO lines. The datasheet outlines all of this information nicely but for our purposes we only need to interract with the following:
+
+| Addr | Reg | Purpose | 
+| ---- | --- | ------- | 
+| 0x00 | IODIRA | Set the direction of the pin bank (input or output) |
+| 0x01 | IODIRB | Set the direction of the pin bank (input or output) |
+| 0x12 | GPIOA  | Set or get the value of the pins based on direction |
+| 0x13 | GPIOB  | Set or get the value of the pins based on direction |
+
+So what we need to do for the IO ports connected to the address lines is to set them to output mode as they will be used to write the address out to the target flash chip. The pins connected to the data lines will be set as input pins. So how do we do that over I2C?
+
+In order to set or read from these registers, we need to perform the following:
+
+1. Perform an I2C write packet, with the address of the target chip that we want to talk to.
+2. Wait for the ACK from the target chip
+3. Write the address of the register that we want to access
+4. Write the value that is desired at the previously written address
+
+The image below, perfectly outlines what we are doing when we interract with something over I2C:
+
+![I2C Diagram](https://www.avrfreaks.net/sites/default/files/forum-images/401012-body-1553702835-1.jpg)
+
+And this is how we will perform that using the ESP32!
+
+```
+//Write a value to a command register
+esp_err_t write_mcp_register(int mcp_addr,int reg_addr, int reg_value){
+    esp_err_t i2c_ret = ESP_OK;
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    // Select the chip we want to talk to via the I2C address set with the ADDR pins
+    i2c_master_write_byte(cmd,mcp_addr<<1|WRITE_BIT,1);
+    // Write the address of the register that we want to manipulate
+    i2c_master_write_byte(cmd,reg_addr,1);
+    // Finally write the value that we want at that register
+    i2c_master_write_byte(cmd,reg_value,1);
+    i2c_master_stop(cmd);
+    i2c_ret = i2c_master_cmd_begin(I2C_NUM_0,cmd,(1000/portTICK_RATE_MS));
+    i2c_cmd_link_delete(cmd);
+    return i2c_ret;
+}
+```
+
+So what we will have to do with these IO expanders is use 2 for the address lines,since we need 20 address lines total and a third for the 16 data lines. We can wire all of these up to the ESP32 as shown in the eagle diagram below:
+
+![Timing Diagram](https://wrongbaud.github.io/assets/img/mk-post/schematic.png)
+
+Also below is a table outlining the addresses for each chip and what it's used for:
+
+| I2C Addr | Purpose/Target Flash Pins | 
+| -------- | ------- |
+| 0x20 | A0:A15 |
+| 0x21 | A16:A20 | 
+| 0x22 | D0:D15 | 
+
+So if we want to write a full 20 bit address value out using the ESP32, the followng code will suffice
+
+```
+void MXICWriteAddr(int address){
+    // Write the low 8 bits out to GPIOA of the first MCP chip at 0x20
+    write_mcp_register(MCP_ADDR_1,GPIOA,(address&0xFF));
+    // Write the next 8 bits out to GPIOB of the first MCP chip at 0x20
+    write_mcp_register(MCP_ADDR_1,GPIOB,((address>>8)&0xFF));
+    // Write the last 4 bits out to GPIOA of the second MCP chip at 0x21
+    write_mcp_register(MCP_ADDR_2,GPIOA,((address>>16)&0xFF));
+}
+```
+
+And we can perform a read of the third MCP chip using the following:
+
+```
+void MXICReadData(int mcp_addr,int flash_addr){
+    uint8_t dath = 0;
+    uint8_t datl = 0;
+    esp_err_t i2c_ret = ESP_OK;
+    // Perform a write operation to tell the IC what register we want to read from
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd,mcp_addr<<1|WRITE_BIT,1);
+    i2c_master_write_byte(cmd,GPIOA,1);
+    i2c_master_stop(cmd);
+    i2c_ret = i2c_master_cmd_begin(I2C_NUM_0,cmd,(.1/portTICK_RATE_MS));
+    i2c_cmd_link_delete(cmd);
+    // Now read from the IC at the given register, subsequent reads will increment the address value automatically 
+    cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd,mcp_addr<<1|READ_BIT,1);
+    i2c_master_read_byte(cmd,&dath,0);
+    i2c_master_read_byte(cmd,&datl,1);
+    i2c_master_stop(cmd);
+    i2c_ret = i2c_master_cmd_begin(I2C_NUM_0,cmd,(.1/portTICK_RATE_MS));
+    i2c_cmd_link_delete(cmd);
+
+    printf("%X:%X:",dath,datl);
+    if(flash_addr % 16 == 0){
+        printf("\r\n");
+    }
+}
+```
 
 #### Dumping the Flash using the MCP23017
 
+Alright, so now that we have our MCP chips wired up to the flash chip as shown in the diagram, what's next? All we need to do is following the timing diagram above and perform the following:
+
+1. Pull CE Low
+2. Write our address value out over I2C
+3. Pull OE Low
+4. Read the result in using I2C
+
+The following ESP32 function will do just this for us:
+
+```
+void ReadFlash(int addr){
+    gpio_set_level(GPIO_CE,0);
+    MXICWriteAddr(addr);
+    gpio_set_level(GPIO_OE,0);
+    MXICReadData(MCP_DATA,addr);
+    gpio_set_level(GPIO_CE,1);
+    gpio_set_level(GPIO_OE,1);
+}
+```
+
+Now lets loop over the address space of the chip, the ```MXICReadData``` will print it out over the serial port on the ESP32 and we can reconstruct the flash using python once we have dumped it all. 
+
+```
+    for(addr=0;addr<0x200000;addr++){
+        ReadFlash(addr);
+    }
+```
+
+This will dump the bytes that are read out over the serial port. While this is obviously not the most elegant solution, it will suffice for our purposes. We can reconstruct the image using the serial output with a python script.
+
+In order to read the flash we can connect to the serial device presented by the ESP32 board we are using and log it to a file: ```sudo screen -L -Logfile mk-read.log /dev/ttyUSB0 115200```
+
+The full ESP32 project can be found here: https://github.com/wrongbaud/flashtality
+
 ### Analyzing the ROM
 
-### Re-writing the parallel flash from the ESP32
 
 ### Conclusion
+
 With this writeup, we've learned about multiplexers, I2C and how parallel flash chips work. I hope that this was useful for those that were interested and as always please reach out with any corrections or questions!
+
