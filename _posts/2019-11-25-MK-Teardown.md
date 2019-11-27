@@ -60,11 +60,11 @@ Alright so we have a rough outline of how to perform read operations on the chip
 
 For this post, we're going to dump this flash using the ESP32 microcontroller. This is a very popular and well supported MCU that houses plenty of embedded peripherals as well as a wireless SoC that can be used for Bluetooth and WiFi comms. Below is a link to the develoment board we'll be using as well as a pinout.
 
-https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf
+* <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf>
+* <http://ww1.microchip.com/downloads/en/devicedoc/20001952c.pdf>
 
 ![ESP32 Pinout](https://wrongbaud.github.io/assets/img/mk-post/ESP32.png)
 
-http://ww1.microchip.com/downloads/en/devicedoc/20001952c.pdf
 
 In order to expand our IO capabilities to be able to interract with this flash chip we are going to use an I2C based IO expander chip called the MCP23017. This chip, as the name suggests, can be communicated with I2C and can be configured to read or write to 16 individual GPIO pins. This means, that by using 2 I2C pins on the ESP32 (SDA, SCL), we'll gain 16 IO lines. We can also put multiple MCP23017 chips on the same I2C bus meaning that we will be able to interract with 48 pins just using I2C on the ESP32! Before we get involved with how this particular chip works, we will provide a brief overview of I2C for the unfamiliar.
 
@@ -274,13 +274,11 @@ Please note that there are a lot of improvements to be done and hopefully I will
 
 Just as a teaser, let's take a look at the ROM in 010Editor and see if we can find any Genesis ROM headers...
 
-![Timing Diagram](https://wrongbaud.github.io/assets/img/mk-post/010-search.png)
-
-Looks like there are quite a few ROMs in here! In the next post we'll tear these out, see if they run in emulators, and try to see what is different between the original MK rom and the one we pulled from this cabinet!
-
 ![ROM 1](https://wrongbaud.github.io/assets/img/mk-post/010-1.png)
 ![ROM 2](https://wrongbaud.github.io/assets/img/mk-post/010-2.png)
 ![ROM 3](https://wrongbaud.github.io/assets/img/mk-post/010-3.png)
+
+Looks like there are quite a few ROMs in here! In the next post we'll tear these out, see if they run in emulators, and try to see what is different between the original MK rom and the one we pulled from this cabinet!
 
 ### Conclusion
 
