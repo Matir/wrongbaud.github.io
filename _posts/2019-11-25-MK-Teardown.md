@@ -153,7 +153,7 @@ These addresses are set using the ```ADDR``` pins on the MCP20317, the three lin
 
 With this snippet of code, we configure the three MCP chips using our ```write_mcp_register``` function:
 
-'''
+```
 void mcp_configure(){
     // Set the bits of the first MCP chip to output mode (addr 0:15)
     write_mcp_register(MCP_ADDR_1,GPIOA,0);
@@ -172,7 +172,8 @@ void mcp_configure(){
     write_mcp_register(MCP_DATA,IODIRA,0xFF);;
     write_mcp_register(MCP_DATA,IODIRB,0xFF);
 }
-'''
+```
+
 
 With the first two chips properly configured for output, if we want to write a full 20 bit address value out using the ESP32, the followng code will suffice
 
