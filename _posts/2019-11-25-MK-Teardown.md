@@ -2,7 +2,7 @@
 layout: post
 title:  "Dumping a Parallel Flash with an ESP32"
 image: ''
-date:   2019-05-06 00:06:31
+date:   2019-11-26 00:06:31
 tags:
 - hardware
 - reversing
