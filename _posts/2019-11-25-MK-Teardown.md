@@ -137,6 +137,10 @@ So what we will have to do with these IO expanders is use 2 for the address line
 
 ![Timing Diagram](https://wrongbaud.github.io/assets/img/mk-post/schematic.png)
 
+And this is what it looks like on the bench, using a TSOP48 breakout board
+
+![Benchtop Wiring](https://wrongbaud.github.io/assets/img/mk-post/FULL-WIRING.jpg)
+
 Also below is a table outlining the addresses for each chip and what it's used for:
 
 | I2C Addr | Purpose/Target Flash Pins | 
