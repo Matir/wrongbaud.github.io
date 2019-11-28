@@ -26,11 +26,11 @@ Taking a look at the PCB, you'll notice that something is _very_ different than 
 ![Board Layout](https://wrongbaud.github.io/assets/img/mk-post/boardlayout.jpg)
 
 ## Understanding Parallel Flash
-Parallel flash chips are very different than the storage mediums we've looked at in the past. They have dedicated address and data lines that are used to access data at certain specific addresses on the chip, rather than accessing the data sequentially like other flash ROMs we've talked about in the past. See the pinout below from the ![relevant datasheet for this chip](https://www.redeszone.net/content/uploads/MX29LV320DTTI-70G-Macronix.pdf):
+Parallel flash chips are very different than the storage mediums we've looked at in the past. They have dedicated address and data lines that are used to access data at certain specific addresses on the chip, rather than accessing the data sequentially like other flash ROMs we've talked about in the past. See the pinout below from the [relevant datasheet for this chip](https://www.redeszone.net/content/uploads/MX29LV320DTTI-70G-Macronix.pdf):
 
 ![Flash Pinout](https://wrongbaud.github.io/assets/img/mk-post/FLASH_PINOUT.png)
 
-Let's start by pointing out the pins that are most important for doing a readout accoridng to the ![datasheet](https://www.redeszone.net/content/uploads/MX29LV320DTTI-70G-Macronix.pdf)
+Let's start by pointing out the pins that are most important for doing a readout accoridng to the [datasheet](https://www.redeszone.net/content/uploads/MX29LV320DTTI-70G-Macronix.pdf)
 
 I would highly reccomend you read along with the datasheet open, having the ability to properly read and interpret a datasheet is very useful when reversing hardware or doing embedded design! I will only be covering a few aspects about how these chips work with this post and there are a lot more features that you may need at some point!
 
