@@ -49,7 +49,7 @@ links:
 
 # projects in header index
 projects:
-  - name: Flashtality: ESP32 Parallel Flash Dumper
+  - name: Flashtality Parallel Flash Dumper
     url: https://github.com/wrongbaud/flashtality
 
 # exclude my node related stuff
