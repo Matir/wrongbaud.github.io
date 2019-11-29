@@ -49,8 +49,8 @@ links:
 
 # projects in header index
 projects:
-  - name: FPGA 101 Exercises
-    url: https://github.com/wrongbaud/fpga_101
+  - name: Flashtality: ESP32 Parallel Flash Dumper
+    url: https://github.com/wrongbaud/flashtality
 
 # exclude my node related stuff
 exclude: ['package.json', 'src', 'node_modules']
