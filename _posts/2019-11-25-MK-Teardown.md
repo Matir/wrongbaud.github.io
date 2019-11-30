@@ -30,9 +30,9 @@ Parallel flash chips are very different than the storage mediums we've looked at
 
 ![Flash Pinout](https://wrongbaud.github.io/assets/img/mk-post/FLASH_PINOUT.png)
 
-Let's start by pointing out the pins that are most important for doing a readout accoridng to the [datasheet](https://www.redeszone.net/content/uploads/MX29LV320DTTI-70G-Macronix.pdf)
+Let's start by pointing out the pins that are most important for doing a readout according to the [datasheet](https://www.redeszone.net/content/uploads/MX29LV320DTTI-70G-Macronix.pdf)
 
-I would highly reccomend you read along with the datasheet open, having the ability to properly read and interpret a datasheet is very useful when reversing hardware or doing embedded design! I will only be covering a few aspects about how these chips work with this post and there are a lot more features that you may need at some point!
+I would highly recommend you read along with the datasheet open, having the ability to properly read and interpret a datasheet is very useful when reversing hardware or doing embedded design! I will only be covering a few aspects about how these chips work with this post and there are a lot more features that you may need at some point!
 
 | Pin Name | Purpose | 
 | -------- | ------- |
@@ -58,7 +58,7 @@ Alright so we have a rough outline of how to perform read operations on the chip
 
 ### Dumping the Parallel flash with an ESP32
 
-For this post, we're going to dump this flash using the ESP32 microcontroller. This is a very popular and well supported MCU that houses plenty of embedded peripherals as well as a wireless SoC that can be used for Bluetooth and WiFi communications. Below is a link to the develoment board we'll be using as well as a pinout.
+For this post, we're going to dump this flash using the ESP32 microcontroller. This is a very popular and well supported MCU that houses plenty of embedded peripherals as well as a wireless SoC that can be used for Bluetooth and WiFi communications. Below is a link to the development board we'll be using as well as a pinout.
 
 * <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf>
 
@@ -66,7 +66,7 @@ For this post, we're going to dump this flash using the ESP32 microcontroller. T
 
 So next you're probably wondering, "How on earth are we going to extract information from this chip when we need so many data and address lines!?" Well, luckily for us there are a number of ways that we can use external ICs (integrated circuits) to expand the amount of IO pins that we can use!
 
-In order to expand our IO capabilities to be able to interract with this flash chip we are going to use an I2C based IO expander chip called the MCP23017. This chip, as the name suggests, can be communicated with I2C and can be configured to read or write to 16 individual GPIO pins. We can also put multiple MCP23017 chips on the same I2C bus meaning that we will be able to interract with 48 pins just using I2C on the ESP32! The datasheet for the MCP23017 can be found below.
+In order to expand our IO capabilities to be able to interact with this flash chip we are going to use an I2C based IO expander chip called the MCP23017. This chip, as the name suggests, can be communicated with I2C and can be configured to read or write to 16 individual GPIO pins. We can also put multiple MCP23017 chips on the same I2C bus meaning that we will be able to interact with 48 pins just using I2C on the ESP32! The datasheet for the MCP23017 can be found below.
 
 * <http://ww1.microchip.com/downloads/en/devicedoc/20001952c.pdf>
 
@@ -74,7 +74,7 @@ Before we get involved with how this particular chip works, we will provide a br
 
 #### Understanding I2C
 
-In previous posts, we discussed UART and SPI, these two protocols are somewhat limited when it comes to addressing mutliple devices at once. For example, UART has no selection or addressing capability, and SPI requires the CS line to be pulled low which will quickly start to eat up GPIO lines with using multiple SPI chips on the same bus.
+In previous posts, we discussed UART and SPI, these two protocols are somewhat limited when it comes to addressing multiple devices at once. For example, UART has no selection or addressing capability, and SPI requires the CS line to be pulled low which will quickly start to eat up GPIO lines with using multiple SPI chips on the same bus.
 
 I2C uses two lines for communication Serial Data (SDA) and Clock (SCL). I2C is similar to SPI in that is synchronous, with the sampling being based on the SCL signal. One benefit of I2C is the ability to address certain chips on the bus within the I2C message frame. A brief overview of the message structure can be seen below:
 
@@ -82,7 +82,7 @@ I2C uses two lines for communication Serial Data (SDA) and Clock (SCL). I2C is s
 | --------------- | ------------- | ------- | -------- | ---------- | -------- | ------------ | -------- | -------- | 
 | 1 Bit (H->L Transition) | 7 or 10 bits | 1 bit | 1 bit | 8 bits | 1 bit | 8 bites | 1 bit | 1 bit |
 
-The address for an I2C slave is typically controlled by assering IO lines on the chip. For example on the MCP23017 chip pins 15:17 control the lower bits of the address variable. We will use these to allow us to have 3 MCP23017 chips on the I2C bus connected to the ESP32, using addresses ```0x20```,```0x21``` and ```0x22```
+The address for an I2C slave is typically controlled by asserting IO lines on the chip. For example on the MCP23017 chip pins 15:17 control the lower bits of the address variable. We will use these to allow us to have 3 MCP23017 chips on the I2C bus connected to the ESP32, using addresses ```0x20```,```0x21``` and ```0x22```
 
 The R/W bit (read / write) is used to determine the type of operation that will be performed on the I2C device. For example you may write to a register of an I2C based sensor in order to configure or initialize it, after that you would read the data from it. We'll need to read and write from the MCP23017 chips in order to properly dump the parallel flash chip.
 
@@ -90,7 +90,7 @@ See the example be low from the Sparkfun I2C tutorial for a better explanation!
 
 ![I2C Diagram](https://cdn.sparkfun.com/assets/6/4/7/1/e/51ae0000ce395f645d000000.png)
 
-#### Interfacting with the MCP23017
+#### Interfacing with the MCP23017
 
 In order to properly talk to this parallel flash chip, we will use two MCP23017 chips to control the address lines and one to read from the data lines. Next we'll look at how to configure the MCP23017 chips via their internal registers. All of the data from below has been pulled from the datasheet below:
 
