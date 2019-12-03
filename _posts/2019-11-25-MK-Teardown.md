@@ -271,7 +271,7 @@ outfile.close()
 
 Now we can start taking apart the resulting binary file to finally see what's on the flash, but we will save that for another post!
 
-The full ESP32 project can be found here: https://github.com/wrongbaud/flashtality
+The full ESP32 project can be found [here](https://github.com/wrongbaud/flashtality)
 
 Please note that there are a lot of improvements to be done and hopefully I will have the time to make these changes over the holidays.
 
