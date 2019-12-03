@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Basicun Arcade Cabinets Part 3: Dumping Parallel Flash with the ESP32"
+title:  "BasicFun Arcade Cabinets Part 3: Dumping Parallel Flash with the ESP32"
 image: ''
 date:   2019-11-26 00:06:31
 tags:
