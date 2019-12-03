@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Dumping a Parallel Flash with an ESP32"
+title:  "Basicun Arcade Cabinets Part 3: Dumping Parallel Flash the ESP32"
 image: ''
 date:   2019-11-26 00:06:31
 tags:
@@ -15,9 +15,10 @@ categories:
 # BasicFUN MK Teardown Part 1: Flash Extraction
 
 ## Background
+
 I noticed not too long ago that a new BasicFUN cabinet came out featuring one of my favorite childhood games: Mortal Kombat. This of coursed piqued my interest and I decided to purchase one and perform a teardown and hopefully dump the flash!
 
-One thing that is important to note is that unlike the previous cabinets that we looked at that were based on consoles that contained 6502 CPUs, the current opinion of people on the forums are saying that this is the Sega Genesis port of Mortal Kombat, meaning that if we manage to extract the storage of this platform we can disassemble some 68k code! The Sega Genesis was my only console growing up and I've reversed many Megadrive/32x ROMs - so needless to say I was excited to extract some data from this platform.
+One thing that is important to note is that unlike the [previous cabinets](https://wrongbaud.github.io/BasicFUN-flashing/) [and roms](https://wrongbaud.github.io/BasicFUN-rom-analysis/) that we looked at that were based on consoles that contained 6502 CPUs, the current opinion of people on the forums are saying that this is the Sega Genesis port of Mortal Kombat, meaning that if we manage to extract the storage of this platform we can disassemble some 68k code! The Sega Genesis was my only console growing up and I've reversed many Megadrive/32x ROMs - so needless to say I was excited to extract some data from this platform.
 
 ### Initial Teardown
 
