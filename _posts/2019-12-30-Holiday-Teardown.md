@@ -5,10 +5,8 @@ image: ''
 date:   2019-12-30 00:06:31
 tags:
 - basicfun
-- hardware
 description: 'Hardware teardown of handheld electronics'
 categories:
-- basicfun
 - hardware
 - reversing
 ---
@@ -35,7 +33,7 @@ In the previous posts we used a buspirate to extract the flash, which is what I 
 
 **NOTE:** Despite many attempts and multiple soldering jobs, I was not able to get consistent readouts working in circuit, so for this platform we will be removing the SPI flash and placing it on a breakout board as seen below:
 
-[BREAKOUT_BOARD]
+![EEPROM Breakout](https://wrongbaud.github.io/assets/img/dec-teardown/eeprom-breakout.jpg)
 
 With the breakout board wired up, we connect the following pins from the SPI flash chip to the FT2232H board
 
