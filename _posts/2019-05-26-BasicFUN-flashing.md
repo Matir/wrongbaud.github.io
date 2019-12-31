@@ -1,13 +1,15 @@
 ---
 layout: post
-title:  "BasicFun Arcade Cabinets Part 1: Hardware teardown and flash dump"
+title:  "BasicFun Series Part 1: Hardware teardown and flash dump"
 image: ''
 date:   2019-05-26 00:06:31
 tags:
+- basicfun
 - reverse engineering
 - tools
 description: ''
 categories:
+- basicfun
 - arcade
 - reverse engineering
 ---
