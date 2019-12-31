@@ -6,11 +6,9 @@ date:   2019-10-07 00:06:31
 tags:
 - hardware
 - reversing
-- router
 description: ''
 categories:
-- hardware
-- reversing
+- router analysis
 ---
 # Router Analysis Part 1: Hardware Teardown
 

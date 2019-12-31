@@ -4,11 +4,11 @@ title:  "BasicFUN Series Part 4: Holiday Hardware Teardown"
 image: ''
 date:   2019-12-30 00:06:31
 tags:
-- basicfun
+- hardware
+- reverse engineering
 description: 'Hardware teardown of handheld electronics'
 categories:
-- hardware
-- reversing
+- basicfun
 ---
 
 # Overview
@@ -16,7 +16,7 @@ Over the holiday break, I received a few more random game platforms from friends
 
 ## Target 1: BasicFUN Oregon Trail
 
-First and foremost, I should say that lots of people have taken this apart and even started to dig through the ROM a little but, first who comes to mind is [@foone on twitter](https://twitter.com/Foone?s=20), as well as [Tom Nardi from hackaday](https://hackaday.com/2018/03/14/teardown-the-oregon-trail-handheld/). With that out of the way, lets take a look at the main board and see what we can identify.
+First and foremost, I should say that lots of people have taken this apart and even started to dig through the ROM, first who comes to mind is [@foone on twitter](https://twitter.com/Foone?s=20), as well as [Tom Nardi from hackaday](https://hackaday.com/2018/03/14/teardown-the-oregon-trail-handheld/). With that out of the way, lets take a look at the main board and see what we can identify.
 
 ![Oregon Trail Board](https://wrongbaud.github.io/assets/img/dec-teardown/oregon-trail-board.jpg)
 
@@ -31,7 +31,7 @@ Excellent, one of these is a SPI flash which we have seen and dealt with before,
 ### Dumping the Flash with an FT2232
 In the previous posts we used a buspirate to extract the flash, which is what I have traditionally used. After chatting with [@securelyfitz on twitter](https://twitter.com/securelyfitz?s=20), I decided to give the [FT2232H](https://www.amazon.com/FTDI-Breakout-Board-Dual-Channel/dp/B06XGGGMB7) breakout boards a try to see how well they work in comparison. We will still be using [flashrom](https://github.com/flashrom/flashrom) for the extraction but we'll have to wire up the FT2232H accordingly.
 
-**NOTE:** Despite many attempts and multiple soldering jobs, I was not able to get consistent readouts working in circuit, so for this platform we will be removing the SPI flash and placing it on a breakout board as seen below:
+**NOTE:** Despite many attempts and multiple soldering jobs, I was not able to get consistent readouts working in-circuit, so for this platform we will be removing the SPI flash and placing it on a breakout board as seen below:
 
 ![EEPROM Breakout](https://wrongbaud.github.io/assets/img/dec-teardown/eeprom-breakout.jpg)
 
@@ -57,7 +57,7 @@ Reading flash... done.
 ```
 
 
-The first thing that I noticed is that this was _noticeably_ faster than using the buspirate, this readout only took a matter of seconds!
+The first thing that I noticed is that this was noticeably faster than using the buspirate, this readout only took a matter of seconds.
 
 It is important when extracting chips like this to always perform a few readouts to make sure that you're getting consistent data.
 
@@ -72,7 +72,14 @@ Reading flash... done.
 wrongbaud@wubuntu:~/blog/dec-teardown$ diff oregon-trail-cab.bin oregon-trail-cab-2.bin
 ```
 
-Great, it looks like we've got a good firmware image of this platform. Digging through some of it in a hex editor, we see a reference to a debug mode, not unlike what we saw in [OTHER_CABINETS]
+Great, it looks like we've got a good firmware image of this platform. Digging through some of it in a hex editor, we see a reference to a possible debug mode, not unlike what we saw in [other platforms](https://wrongbaud.github.io/BasicFUN-flashing/)
+
+For the curious, the md5sum can be seen below:
+
+```
+wrongbaud@wubuntu:~/blog/dec-teardown$ md5sum oregon-trail-cab.bin 
+30729486a10915d9dd87b1e0d4c3e3b4  oregon-trail-cab.bin
+```
 
 ### Debug Mode
 
@@ -87,7 +94,7 @@ In order to introspect on what this test is actually doing, let's hook up a chea
 
 ![Pulseview](https://wrongbaud.github.io/assets/img/dec-teardown/pulseview.png)
 
-Sure enough, we see I2C traffic, but what exactly is it doing? If you need a primer on I2C, please see my previous post for some more information.
+Sure enough, we see I2C traffic, but what exactly is it doing? If you need a primer on I2C, please see [my previous post](https://wrongbaud.github.io/MK-Teardown/) for some more information.
 
 If we look at the first few packets, we see the following:
 
@@ -99,7 +106,7 @@ Ok so what exactly is happening here? First, 8 write operations are performs as 
 
 ![I2C Packet 3](https://wrongbaud.github.io/assets/img/dec-teardown/byte-write.png)
 
-So the first 8 packets are writing bytes ```E1-E8``` to addresses ```F0-F7```. After these writes are performed, the test simple reads them back out to check that the proper bytes were written which can be seen in the screenshot below. Neat!
+So the first 8 packets are writing bytes ```E1-E8``` to addresses ```0x1F0-0x1F7```. Why ```0x1F0``` and not ```0xF0```? Well, the address bits ```A0:A1``` for the I2C device are actually used to select the page that is currently being accessed, we will review this later on in the post when we dump the chip. After these writes are performed, the test simple reads them back out to check that the proper bytes were written which can be seen in the screenshot below. Neat!
 
 ![I2C Test Read](https://wrongbaud.github.io/assets/img/dec-teardown/i2c-test-read.png)
 
@@ -145,7 +152,7 @@ i2c-1   i2c             OMAP I2C adapter                        I2C adapter
 i2c-2   i2c             OMAP I2C adapter                        I2C adapter
 ```
 
-The ```i2cdetect``` will list the available I2C controllers, on our case we're using ```i2c-2``` because those are the pins we connected to. Next we can probe for the actual flash device itself.
+The ```i2cdetect``` will list the available I2C peripherals, on our case we're using ```i2c-2``` because those are the pins we connected to. Next we can probe for the actual flash device itself.
 
 ```
 debian@sinistar:~$ i2cdetect -r 2
@@ -268,7 +275,7 @@ So with the BeagleBone, we're now able to properly read out the contents of the 
 
 ## Target 2: ATGames Blast 
 
-Second on the list, is a simple [HDMI based game device](https://blast.atgames.net/blast_family/5/game_list) that was given to me by a friend who knows how much I enjoy tearing these things apart. They were kind enough to give me to (they were on sale at target for $5 apparently) knowing that one would likely be torn apart. 
+Second on the list, is a simple [HDMI based game device](https://blast.atgames.net/blast_family/5/game_list) that was given to me by a friend who knows how much I enjoy tearing these things apart. They were kind enough to give me two (they were on sale at target for $5 apparently) knowing that one would likely be torn apart. 
 
 ### Hardware Overview
 
@@ -352,9 +359,9 @@ wrongbaud@wubuntu:~/blog/flashtality/_atgames-full.bin.extracted$ for file in $(
 ![skykid](https://wrongbaud.github.io/assets/img/dec-teardown/skykid.png)
 ![xevious](https://wrongbaud.github.io/assets/img/dec-teardown/xevious.png)
 
-Nice! All of these run in an emulator, this is really neat for a handful of reasons, but mainly that if one were so inclined, you could reflash this firmware image with new NES roms and play them! Perhaps I will take a look at this once I implement write support in flashtality!
+Nice! All of these run in an emulator, this is really neat for a handful of reasons, but mainly that if one were so inclined, you could reflash this firmware image with new NES roms and play them! Perhaps I will take a look at this once I implement write support in flashtality.
 
 
 ## Conclusion
 
-With this write up, we took a look at two new platforms, extracted all of the information from each and learned about using I2C EEPROMs. We used a BeagleBone Black to communicate with an I2C EEPROM as well as an FT2232H to extract a SPI EEPROM via flashrom. Lastly we utilized the ESP32 based flashtality tool in order to extract information from a new platform. Hopefully this information was of interest and can serve as a reference for those doing similar work.
+I wanted to get one last post out the door for 2019, if there are things or topics that you would like to learn more about or see featured, please [reach out to me on twitter](https://twitter.com/wrongbaud) and let me know. With this write up, we took a look at two new platforms, extracted all of the information from each and learned about interfacing with I2C EEPROMs. We used a BeagleBone Black to communicate with an I2C EEPROM as well as an FT2232H to extract a SPI EEPROM via flashrom. Lastly we utilized the ESP32 based flashtality tool in order to extract information from a new platform. Hopefully this information was of interest and can serve as a reference for those doing similar work. Thanks for taking the time to read, and please reach out with any feedback or questions

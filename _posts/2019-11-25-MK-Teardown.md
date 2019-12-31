@@ -1,17 +1,14 @@
 ---
 layout: post
-title:  "BasicFun Series Part 3: Dumping Parallel Flash with the ESP32"
+title:  "BasicFUN Series Part 3: Dumping Parallel Flash with the ESP32"
 image: ''
 date:   2019-11-26 00:06:31
 tags:
-- basicfun
 - hardware
-- reversing
+- reverse engineering
 description: 'Using an ESP32 microcontroller to access and dump a parallel flash chip present on a BasicFUN Mortal Kombat cabinet'
 categories:
 - basicfun
-- hardware
-- reversing
 ---
 
 # BasicFUN MK Teardown Part 1: Flash Extraction

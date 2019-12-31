@@ -6,12 +6,11 @@ date:   2019-08-4 00:20:10
 tags:
 - embedded
 - tools
-- automotive
 - tricore
 description: ''
 categories:
-- embedded
 - automotive
+- tricore
 ---
 
 # Background

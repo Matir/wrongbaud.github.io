@@ -9,7 +9,7 @@ tags:
 - reversing
 description: ''
 categories:
-- linux
+- automotive
 ---
 
 # Using Buildroot for Reverse Engineering

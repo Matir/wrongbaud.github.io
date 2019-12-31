@@ -1,17 +1,14 @@
 ---
 layout: post
-title:  "BasicFun Series Part 2: ROM Dissection"
+title:  "BasicFUN Series Part 2: ROM Dissection"
 image: ''
 date:   2019-05-26 00:06:31
 tags:
-- basicfun
+- hardware
 - reverse engineering
-- tools
-description: ''
+description: 'Analysis of BasicFUN Nes ROMs'
 categories:
 - basicfun
-- arcade
-- reverse engineering
 ---
 
 ### Corrections and Omissions

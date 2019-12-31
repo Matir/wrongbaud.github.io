@@ -1,17 +1,14 @@
 ---
 layout: post
-title:  "BasicFun Series Part 1: Hardware teardown and flash dump"
+title:  "BasicFUN Series Part 1: Hardware teardown and flash dump"
 image: ''
 date:   2019-05-26 00:06:31
 tags:
-- basicfun
+- hardware
 - reverse engineering
-- tools
-description: ''
+description: 'Dumping SPI flash chips in BasicFUN Cabinets'
 categories:
 - basicfun
-- arcade
-- reverse engineering
 ---
 
 ## Background
