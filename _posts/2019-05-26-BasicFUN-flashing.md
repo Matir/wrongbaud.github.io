@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "BasicFUN Series Part 1: Hardware teardown and flash dump"
+title:  "BasicFUN Series Part 1: Hardware Analysis / SPI Flash Extraction"
 image: ''
 date:   2019-05-26 00:06:31
 tags:

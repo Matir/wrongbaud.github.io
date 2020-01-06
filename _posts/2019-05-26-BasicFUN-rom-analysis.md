@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "BasicFUN Series Part 2: ROM Dissection"
+title:  "BasicFUN Series Part 2: Reverse Engineering Firmware / Reflashing SPI Flash"
 image: ''
 date:   2019-05-26 00:06:31
 tags:

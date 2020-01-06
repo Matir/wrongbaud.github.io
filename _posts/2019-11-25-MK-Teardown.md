@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "BasicFUN Series Part 3: Dumping Parallel Flash with the ESP32"
+title:  "BasicFUN Series Part 3: Dumping Parallel Flash via I2C I/O Expanders"
 image: ''
 date:   2019-11-26 00:06:31
 tags:

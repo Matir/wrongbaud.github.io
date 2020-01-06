@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "BasicFUN Series Part 4: Holiday Hardware Teardown"
+title:  "BasicFUN Series Part 4: I2C Sniffing, EEPROM Extraction and Parallel Flash Extraction"
 image: ''
 date:   2019-12-30 00:06:31
 tags:
