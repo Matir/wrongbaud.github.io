@@ -66,8 +66,8 @@ The SPI bus requires 4 pins (there is a QUAD SPI mode that can also be used but 
 | --- | ----- | 
 | CS (Chip Select) | Used to select the appropriate device on the SPI bus that the host wishes to communicate with | 
 | CLK (Clock) | Clock signal that is host generated, data is sampled on the **Rising** edge of the clock | 
-| MISO (Master out slave in) | This line is used to send data to the target device from the host devices, we will issue commands through this line | 
-| MOSI (Master in slave out) | Responses from the target device will be sent over this line |  
+| MOSI (Master out slave in) | This line is used to send data to the target device from the host devices, we will issue commands through this line | 
+| MISO (Master in slave out) | Responses from the target device will be sent over this line |  
 
 In order to access a SPI device, the following sequence occurs:
 
