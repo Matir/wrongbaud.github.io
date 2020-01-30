@@ -81,7 +81,7 @@ First off - SWD interfaces with something called a "Debug Access Port" (DAP). Th
 
 Each of these APs consist of 64, 32 bit registers, with one register that is used to identify the type of AP. The function and features of the AP determine how these registers are accessed and utilized. You can find all of the information regarding these transactions for some of the standard APs [here](https://static.docs.arm.com/ihi0031/c/IHI0031C_debug_interface_as.pdf). The ARM interface specification defines two APs by default and they are the JTAG-AP, and the MEM-AP. The MEM-AP also includes a discovery mechanism for components that are attached to it. 
 
-#### SWD Protocol
+### SWD Protocol
 
 As we mentioned before - SWD was developed as a pseudo-replacement for JTAG. With SWD the pin count was reduced from 4 to 2 and it provides a lot of the same functionality of JTAG. One downside to SWD however is that devices can not be daisy chained together, which JTAG allowed for. The two pins that are used in SWD are below:
 
@@ -124,12 +124,12 @@ Install the dependencies:
 ```
 sudo apt-get install build-essential libusb-1.0-0-dev automake libtool gdb-multiarch
 ```
-Clone the repository, configure for our adpter (ST-Link V2), and build!
+Clone the repository, configure, and build!
 ```
 wrongbaud@115201:~/blog$ git clone https://git.code.sf.net/p/openocd/code openocd-code
 cd openocd-code
 ./bootstrap
-./configure --enable-stlink
+./configure
 make -j$(nproc)
 ```
 
@@ -138,9 +138,51 @@ With OpenOCD built, we can attempt to debug this controller over SWD. In order t
 * What are we using to debug _with_ (which debug adapter are we using)
 * What target are we debugging
 
-To do the debugging, we will use the FT2232H which we used in a [previous post](https://wrongbaud.github.io/Holiday-Teardown/) to dump a SPI flash. With this interface we can use OpenOCD to query information about the target via SWD, which is important because at this stage in the reversing process we don't know what the target CPU is!
+To do the debugging, we will use the FT2232H which we used in a [previous post](https://wrongbaud.github.io/Holiday-Teardown/) to dump a SPI flash. With this interface we can use OpenOCD to query information about the target via SWD, which is important because at this stage in the reversing process we don't even know what the target CPU is!
 
-We can use the following script to query the ```DPIDR``` register on the DAP controller:
+Below is a table for determining what pins on the FT2232H need to be connected to a SWD target:
+
+| FT2232H Pin | SWD Target | 
+| ----------- | ---------- |
+| | SWD |
+| | SCLK|
+| | SRST (System Reset) |
+
+Lastly, in order to use the FT2232H as a SWD adapter, you have to put a 470 OHM resistor betweeon PIN/PIN on the FT2232H.
+
+Once we have the pins on the FT2232H hooked up to the target we can use the following script to query the ```DPIDR``` register on the DAP controller:
+
+```
+interface ftdi
+ftdi_vid_pid 0x0403 0x6010
+ftdi_channel 0
+ftdi_layout_init 0x0018 0x05fb
+ftdi_layout_signal SWD_EN -data 0
+ftdi_layout_signal nSRST -data 0x0010
+# swd enable
+# tri-state (configure as input) TDO/TIO when reading
+transport select swd
+adapter_khz 100
+swd newdap chip cpu -enable
+dap create chip.dap -chain-position chip.cpu
+init
+dap info
+```
+
+We can run this script with openocd as shown, with the following output (note that the first time it was run, there was no output, after swapping the SWD/SCLK lines the following output was printed out)
+
+```
+wrongbaud@115201:/usr/local/share/openocd/scripts/interface/ftdi$ sudo openocd -f /tmp/test.cfg 
+Open On-Chip Debugger 0.10.0+dev-01035-g60aaf148 (2020-01-22-18:18)
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : FTDI SWD mode enabled
+Info : clock speed 100 kHz
+Info : SWD DPIDR 0x2ba01477
+```
+
+Excellent! We've found a chip ID of ```0x2ba01477``` if we google this ID we see lots of hits for various Cortex M / STM32 devices - which would make sense because this processor series supports SWD! Now that we can presumably communicate with the DAP, we should see if we can determine the exact processor that is being used - if this is one that has a configuration file written for it we will be able to dump flash banks and get other auxilarry information from the target processor. With this additional information we can tell OpenOCD to create a target DAP, and chip with the Cortex M defitnition, this will hopefully allow us to take more advantage of the DAP and get access to some of the more generic features while we try to figure out exactly which CPU we're targeting:
 
 ```
 interface ftdi
@@ -160,86 +202,21 @@ init
 dap info
 ```
 
-We can run this script with openocd as shown, with the following output
+When we run openocd with this config file we see the following results:
 
 ```
-wrongbaud@115201:/usr/local/share/openocd/scripts/interface/ftdi$ sudo openocd -f /tmp/test.cfg 
-Open On-Chip Debugger 0.10.0+dev-01035-g60aaf148 (2020-01-22-18:18)
-Licensed under GNU GPL v2
-For bug reports, read
-	http://openocd.org/doc/doxygen/bugs.html
-Info : FTDI SWD mode enabled
-Info : clock speed 100 kHz
-Info : SWD DPIDR 0x2ba01477
-Info : chip.cpu: hardware has 6 breakpoints, 4 watchpoints
-Info : Listening on port 3333 for gdb connections
-AP ID register 0x24770011
-	Type is MEM-AP AHB3
-MEM-AP BASE 0xe00ff003
-	Valid ROM table present
-		Component base address 0xe00ff000
-		Peripheral ID 0x00000a0411
-		Designer is 0x0a0, STMicroelectronics
-		Part is 0x411, Unrecognized 
-		Component class is 0x1, ROM table
-		MEMTYPE system memory present on bus
-	ROMTABLE[0x0] = 0xfff0f003
-		Component base address 0xe000e000
-		Peripheral ID 0x04000bb00c
-		Designer is 0x4bb, ARM Ltd.
-		Part is 0xc, Cortex-M4 SCS (System Control Space)
-		Component class is 0xe, Generic IP component
-	ROMTABLE[0x4] = 0xfff02003
-		Component base address 0xe0001000
-		Peripheral ID 0x04003bb002
-		Designer is 0x4bb, ARM Ltd.
-		Part is 0x2, Cortex-M3 DWT (Data Watchpoint and Trace)
-		Component class is 0xe, Generic IP component
-	ROMTABLE[0x8] = 0xfff03003
-		Component base address 0xe0002000
-		Peripheral ID 0x04002bb003
-		Designer is 0x4bb, ARM Ltd.
-		Part is 0x3, Cortex-M3 FPB (Flash Patch and Breakpoint)
-		Component class is 0xe, Generic IP component
-	ROMTABLE[0xc] = 0xfff01003
-		Component base address 0xe0000000
-		Peripheral ID 0x04003bb001
-		Designer is 0x4bb, ARM Ltd.
-		Part is 0x1, Cortex-M3 ITM (Instrumentation Trace Module)
-		Component class is 0xe, Generic IP component
-	ROMTABLE[0x10] = 0xfff41003
-		Component base address 0xe0040000
-		Peripheral ID 0x04000bb9a1
-		Designer is 0x4bb, ARM Ltd.
-		Part is 0x9a1, Cortex-M4 TPIU (Trace Port Interface Unit)
-		Component class is 0x9, CoreSight component
-		Type is 0x11, Trace Sink, Port
-	ROMTABLE[0x14] = 0xfff42003
-		Component base address 0xe0041000
-		Peripheral ID 0x04000bb925
-		Designer is 0x4bb, ARM Ltd.
-		Part is 0x925, Cortex-M4 ETM (Embedded Trace)
-		Component class is 0x9, CoreSight component
-		Type is 0x13, Trace Source, Processor
-	ROMTABLE[0x18] = 0x0
-		End of ROM table
-
-Info : Listening on port 6666 for tcl connections
-Info : Listening on port 4444 for telnet connections
-Polling target chip.cpu failed, trying to reexamine
-Info : SWD DPIDR 0x2ba01477
-Info : chip.cpu: hardware has 6 breakpoints, 4 watchpoints
 ```
-Excellent! We've found a chip ID of ```0x2ba01477``` if we google this ID we see lots of hits for various STM32 devices - which would make sense because this processor series supports SWD! Now that we can properly communicate with the DAP, we should see if we can determine the exact processor that is being used - if this is one that has a configuration file written for it we will be able to dump flash banks and get other auxilarry information from the target processor. 
 
-openocd -f /tmp/test.cfg
+With these new changes, we can not interract with the DAP and MEM-AP, but what does that grant us? For starters we can read memory now, as well as set breakpoints and single step through code. While this is extremely useful it still doesn't technically answer the question regarding what specific CPU we are targeting. To figure this out, there are some [memory regions that are common in STM32 CPUs](https://github.com/antongus/stm32tpl/blob/master/stm32.h
+) that are used to store ID and flash information. With this information we can modify the OpenOCD script to read these regions and look for relevant ID information!
 
+```
+```
 
+When we run the updated OpenOCd script we see the following results:
 
-Now we can try to use the GDB server included with OpenOCD or connect to the telnet server. We will start with the telnet server. 
-
-
-https://github.com/antongus/stm32tpl/blob/master/stm32.h
+```
+```
 
 
 
