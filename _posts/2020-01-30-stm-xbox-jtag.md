@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Dumping Xbox Controller Firmware via Single Wire Debug"
+title:  "Hardware Debugging for Reverse Engineers Part 1: SWD, OpenOCD and Xbox One Controllers"
 image: ''
 date:   2020-01-30 00:06:31
 tags:
