@@ -20,6 +20,16 @@ I was looking around my apartment for potential targets for my next post and was
 
 I don't really play my XBox that much so I thought it might be interesting to tear down this controller and see what kind of information we could extract from it.
 
+## Goals
+ 
+When assessing an embedded platform there are a number of things you can do or try to accomplish, with this post I want to demonstrate/test the following:
+
+1. Can the firmware be extracted from the target?
+2. Can the target be debugged or instrumented in such a way that allows us to learn more about it's internal operations?
+3. Can the firmware be modified or changed, either through software exploitation or hardware modifications?
+
+The first step to answering some of these questions will be a hardware teardown.
+
 ## Hardware Teardown
 
 Opening up the case reveals the following PCB:
@@ -40,7 +50,7 @@ So we see ```3V3```,```A13```,```A14```,```RES``` labeled in the silkscreen. Thi
 
 | Pin | Value | 
 | --- | ----- | 
-| ??? | 0 (GND) | 
+| 0/NA | 0 (GND) | 
 | RES | 3.3V | 
 | A14 | 0.1V | 
 | A13 | 3.3V | 
@@ -70,7 +80,7 @@ We can test if the ```RES``` pin actually resets the target by pulling it low wi
 
 Ah excellent, doing this caused the controller to reset, that's one pin down, 2 more to go.
 
-When looking at debug headers like this, a common assumption is that it's for JTAG or some other form of hardware level debugging. However, the JTAG spec requires that there be at least 4 pins, TDO,TDI,TMS and TCK. We only have two on our target, so there is a good chance that this is a Single Wire Debug (SWD) port. 
+When looking at debug headers like this, a common assumption is that it's for JTAG or some other form of hardware level debugging. However, the JTAG spec requires that there be at least 4 pins, ```TDO```,```TDI```,```TMS``` and ```TCK```. We only have two on our target, so there is a good chance that this is a Single Wire Debug (SWD) port. 
 
 ## Understanding SWD
 SWD is a common debugging interface that is used for ARM Cortex targets. As the name implies, SWD only requires one data line and one clock line, but how can we determine which one is which? Before we go down that route, we should understand a little more about how SWD works and what tools can be used to interface with it.
@@ -175,13 +185,13 @@ swd newdap chip cpu -enable
 dap create chip.dap -chain-position chip.cpu
 ```
 
-We can run this script with openocd as shown, with the following output (note that the first time it was run, there was no output, after swapping the SWD/SCLK lines the following output was printed out). See the table below for the connections to be made to the controller from the FT2232
+We can run this script with openocd as shown, with the following output (note that the first time it was run, there was no output, after swapping the ```SWD```/```SCLK``` lines the following output was printed out). See the table below for the connections to be made to the controller from the FT2232
 
 | FT2232H Pin | Controller| 
 | ----------- | ---------- |
-| ```AD1``` | SWD (A13) |
-| ```AD0```| SCLK (A14) |
-| ```AD4```| SRST (RES) |
+| ```AD1``` | SWD (```A13```) |
+| ```AD0```| SCLK (```A14```) |
+| ```AD4```| SRST (```RES```) |
 
 ```
 wrongbaud@wubuntu:~/blog/stm32-xbox$ sudo openocd -f openocd.cfg 
@@ -277,7 +287,7 @@ Info : Listening on port 6666 for tcl connections
 Info : Listening on port 4444 for telnet connections
 ```
 
-With these new changes, we can not only interact with the DAP and MEM-AP, but we can also debug the target via GDB. We can also determine that the target CPU is an STM32F2X series because of the 0x411 part number in this table entry:
+With these new changes, we can not only interact with the DAP and MEM-AP, but we can also debug the target via GDB. We can also determine that the target CPU is an STM32F2X series because of the 0x411 part number in the MEM-AP entry:
 
 ```
 MEM-AP BASE 0xe00ff003
@@ -340,7 +350,7 @@ Failed to read memory at 0x1ff800d4
 > 
 ```
 
-We can get the flash size with the following command:
+We can get the flash size with the following command, using the flash address from the datasheet for this chip, or the [repository](https://github.com/antongus/stm32tpl/blob/master/stm32.h) linked above:
 
 ```
 > mdh 0x1FFF7A22
@@ -348,7 +358,7 @@ We can get the flash size with the following command:
 ```
 
 
-Now that we know the exact target, we can remove the target ```swd```, ```dap``` and ```target``` lines from our config file, and replace them with a call to ```-f /usr/local/share/openocd/scripts/target/stm32f2x.cfg``` from the command line. This will properly enumerate the target CPU. 
+Now that we know the exact target, we can remove the target ```swd```, ```dap``` and ```target``` lines from our config file, and replace them with a call to ```-f /usr/local/share/openocd/scripts/target/stm32f2x.cfg``` from the command line. This will properly enumerate the target CPU. We also know now that this STM32F2 series chip has 0x100 1kb pages of flash memory.
 
 ```
 wrongbaud@wubuntu:~/blog/stm32-xbox$ sudo openocd -f openocd.cfg -f /usr/local/share/openocd/scripts/target/stm32f2x.cfg 
@@ -418,7 +428,7 @@ determining executable automatically.  Try using the "file" command.
 
 So at this point, we have the flash dumped, we can debug and single step through the firmware, but ...  can we reflash the MCU?
 
-If we can locate the USB descriptor strings in the firmware image and patch them, we can use that as a visible method to determine if we can patch the firmware. Let's load up the firmware in GHIDRA and see if we can find them, the firmware image can be loaded at address 0x8000000. Luckily, this firmware image is rather small and Ghidra makes quick work of it. The strings that were seen in the ```dmesg``` output can be seen in the screenshot below:
+If we can locate the USB descriptor strings in the firmware image and patch them, we can use that as a visible method to determine if we can patch the firmware. Let's load up the firmware in GHIDRA and see if we can find them, the firmware image can be loaded at address ```0x8000000```. We know that the firmware is loaded at ```0x8000000``` based on the datasheet, however if we did not have the datasheet this could be determined from OpenOCD by issuing the ```reset halt``` command and single stepping through the first instruction. Luckily, this firmware image is rather small and Ghidra makes quick work of it. The strings that were seen in the ```dmesg``` output can be seen in the screenshot below:
 
 ![xrefs](https://wrongbaud.github.io/assets/img/xbox-controller/xrefs.png)
 
@@ -478,4 +488,4 @@ Excellent - so we now have the firmware fully extracted and loaded into ghidra, 
 
 ## Conclusion
 
-With this post, we covered how Single Wire Debug works, as well as how to identify, enumerate and debug an unknown CPU with hardware debugging tools. OpenOCD was also used with a FT2232H based interface to extract firmware images as well as reflash new firmware onto the target.
+When performing an assessment of an embedded system, you typically want to enumerate and explore all possible interfaces and methods of interacting with the target. Whether your end goal is to hunt for bugs, modify the device's normal operation or just learn more about how it works, hardware debugging is _extremely_ useful. By utilizing hardware debugging we were able to extract the firmware from this target, set up a live debugger and also modify the firmware. Through this this exercise, we also covered how Single Wire Debug works, as well as how to identify, enumerate and debug an unknown CPU with hardware debugging tools. OpenOCD was also used with a FT2232H based interface to extract firmware images as well as reflash new firmware onto the target. Thanks for reading and if you have any questions or just want to talk more about this kind of stuff please feel free to ping me on [twitter](https://twitter.com/wrongbaud)
