@@ -60,6 +60,7 @@ With our loader, we want to perform the following:
 
 1. Create and label memory ranges for memory-mapped peripherals
 2. Find and label entry point and IVT
+3. Label Locations of Interest
 
 #### Ghidra Loader Components
 
