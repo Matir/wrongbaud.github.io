@@ -164,6 +164,8 @@ The full loop to create these regions can be seen below:
 
 And with this, we will have properly mapped out all of the memory mapped peripherals!
 
+![Memory Maps]((https://wrongbaud.github.io/assets/img/ghidra-loader/mem-regions.png)
+
 **Disclaimer:** If there is a better way to do this with the Ghidra API, please let me know or even better submit a PR. One of my favorite things about this blog is getting constructive feedback and recommendations from people. 
 
 #### Step 2: Create and Label Entry Point / IVT
