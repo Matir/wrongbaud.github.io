@@ -50,7 +50,7 @@ While this is useful, there are still lots of regions of memory that we haven't 
 
 So what are these exactly? These are regions in memory that Ghidra can detect are being used, but are not defined in our Ghidra database. Remember that we are not reverse engineering a standard executable, which would typically reside in virtual memory whose expected ranges are defined in the header (ELF,PE,etc). This is a firmware image, that will interact with various hardware peripherals as memory mapped IO. In order to make reversing this firmware image a little easier, we can define these memory ranges properly in Ghidra. This can be done manually, via a script, or through a loader. Since I often run into STM32 variants through my reverse engineering projects I think it will be worth the time to write a simple loader for the STM32F2 series and learn more about extending Ghidra.
 
-##### What is a Ghidra Loader?
+#### What is a Ghidra Loader?
 A Ghidra loader, is an extension that makes the ... loading of a binary file more streamlined. For example, if the binary file has a header defining various memory regions and features,  the loader can read those features and add the necessary sections to your Ghidra database in order to assist with the reverse engineering process. For our target, the loader will predominately focus on setting up the appropriate memory mapped peripherals and labelling registers of interest to streamline the process of reverse engineering the USB stack on this controller.
 
 ## Writing a Loader
@@ -66,13 +66,16 @@ With our loader, we want to perform the following:
 When starting with the baseline project, we are given the following function definitions:
 
 * ```getName```
+
 This one is fairly self explanatory, we need not get into it.
 
 * ```findSupportedLoadSpecs```
 
 This function is used to determine if your loader can load the binary or not. This is where you would check the header for your target if it has a known format. For our case with this flat firmware image, there isn't much we can do here. We do have to set the Language/Compiler pair here however, which is done with the following line:
 
-```loadSpecs.add(new LoadSpec(this, 0, new LanguageCompilerSpecPair("ARM:LE:32:Cortex", "default"), true));```
+```
+loadSpecs.add(new LoadSpec(this, 0, new LanguageCompilerSpecPair("ARM:LE:32:Cortex", "default"), true));
+```
 
 Here we are telling Ghidra to use the ARM Cortex LE analyzer.
 
@@ -229,7 +232,7 @@ After adding this, the start of our image now looks like this in Ghidra:
 
 So we want to outline more of the USB functionality in this firmware image, so in order to make things a little more readable we can label the USB configuration registers. In order to do this we will do the same thing that we did with the other regions / registers. 
 
-To do this we will use a similar technique to the other regions that we identified, except for this time we will only create labels. You can look at the github project for specific details but the addition of the control registers cleans up the assembly quite nicely.
+To do this we will use a similar technique to the other regions that we identified, except for this time we will only create labels. You can look at the [github project for specific details](https://github.com/wrongbaud/ghidra-stm32) but the addition of the control registers cleans up the assembly quite nicely.
 
 ![USB Annotation](https://wrongbaud.github.io/assets/img/ghidra-loader/usbregs.png)
 
