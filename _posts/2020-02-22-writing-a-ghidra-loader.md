@@ -16,7 +16,8 @@ categories:
 
 In my [last post](https://wrongbaud.github.io/stm-xbox-jtag/) we managed to dump the firmware off of an Xbox One controller by using the Single Wire Debug interface. In addition to extracting the firmware, we were able to also determine the CPU family even though the processor was covered in epoxy. Now that we have the firmware image as well as the target CPU determined, we can load it into Ghidra and attempt to learn more about how it works. For this post, we will focus on learning more about how the controller communicates it's state to a host by reverse engineering it's USB communications at the firmware level. 
 
-##### Required Reading / Materials
+#### Required Reading / Materials
+
  If you've not read my [last post](https://wrongbaud.github.io/stm-xbox-jtag/) on SWD and OpenOCD you will want to start there, you will also want the [datasheet](https://www.st.com/content/ccc/resource/technical/document/reference_manual/51/f7/f3/06/cd/b6/46/ec/CD00225773.pdf/files/CD00225773.pdf/jcr:content/translations/en.CD00225773.pdf) for the target CPU family.
 
 ## What is Ghidra?
@@ -27,25 +28,25 @@ In my [last post](https://wrongbaud.github.io/stm-xbox-jtag/) we managed to dump
 
 First off, if you don't have Ghidra you can always grab the latest version from [here](https://ghidra-sre.org/) or [build it yourself](https://github.com/dukebarman/ghidra-builder), for this post I will be using ```9.1.2_PUBLIC``` release from the official site. We'll start by opening the CodeBrowser window by clicking on the green dragon button that can be seen below:
 
-![Ghidra Broswer](https://wrongbaud.github.io/assets/img/ghidar-loader/ghidra-project-window.png)
+![Ghidra Broswer](https://wrongbaud.github.io/assets/img/ghidra-loader/ghidra-project-window.png)
 
 After selecting this, you'll see the following window open up, this is the CodeBrowser
 
-![Code Browser](https://wrongbaud.github.io/assets/img/ghidar-loader/codebrowser.png)
+![Code Browser](https://wrongbaud.github.io/assets/img/ghidra-loader/codebrowser.png)
 
 Next we will import the dumped firmware image by pressing ```I``` or going to ```File``` -> ```Import File``` which will cause the following window to appear:
 
-![Import](https://wrongbaud.github.io/assets/img/ghidar-loader/import.png)
+![Import](https://wrongbaud.github.io/assets/img/ghidra-loader/import.png)
 
 For language, we will select Cortex (Little Endian) which is what is listed in the [datasheet](https://www.st.com/content/ccc/resource/technical/document/reference_manual/51/f7/f3/06/cd/b6/46/ec/CD00225773.pdf/files/CD00225773.pdf/jcr:content/translations/en.CD00225773.pdf) for this chip. Under options we will also set the load address to ```0x8000000``` which is the appropriate load address for theses CPUs according to the datasheet. 
 
 Since this is a rather small firmware image, Ghidra's auto-analysis handles a _lot_ for us. For example the USB descriptor strings are assigned XREFs from the start. For those that are unfamiliar, n ```XREF``` (cross reference) is assigned when the disassembler an certain address being used by an instruction. 
 
-![XREFs](https://wrongbaud.github.io/assets/img/ghidar-loader/xrefs.png)
+![XREFs](https://wrongbaud.github.io/assets/img/ghidra-loader/xrefs.png)
 
 While this is useful, there are still lots of regions of memory that we haven't yet defined in Ghidra which can be seen in the screenshot below. 
 
-![XREFs](https://wrongbaud.github.io/assets/img/ghidar-loader/undefined-regions.png)
+![XREFs](https://wrongbaud.github.io/assets/img/ghidra-loader/undefined-regions.png)
 
 So what are these exactly? These are regions in memory that Ghidra can detect are being used, but are not defined in our Ghidra database. Remember that we are not reverse engineering a standard executable, which would typically reside in virtual memory whose expected ranges are defined in the header (ELF,PE,etc). This is a firmware image, that will interact with various hardware peripherals as memory mapped IO. In order to make reversing this firmware image a little easier, we can define these memory ranges properly in Ghidra. This can be done manually, via a script, or through a loader. Since I often run into STM32 variants through my reverse engineering projects I think it will be worth the time to write a simple loader for the STM32F2 series and learn more about extending Ghidra.
 
@@ -222,7 +223,7 @@ So with this, we can create another list of IVT entries and loop over them durin
 
 After adding this, the start of our image now looks like this in Ghidra:
 
-![Vectors](https://wrongbaud.github.io/assets/img/ghidar-loader/vectors.png)
+![Vectors](https://wrongbaud.github.io/assets/img/ghidra-loader/vectors.png)
 
 #### Step 3: Label Locations of Interest
 
@@ -230,7 +231,7 @@ So we want to outline more of the USB functionality in this firmware image, so i
 
 To do this we will use a similar technique to the other regions that we identified, except for this time we will only create labels. You can look at the github project for specific details but the addition of the control registers cleans up the assembly quite nicely.
 
-![USB Annotation](https://wrongbaud.github.io/assets/img/ghidar-loader/usbregs.png)
+![USB Annotation](https://wrongbaud.github.io/assets/img/ghidra-loader/usbregs.png)
 
 #### Closing Thoughts on Loader Development
 
@@ -244,11 +245,11 @@ Using the new loader, a lot of interesting information falls out of subroutines 
 
 Before loader:
 
-![USB Annotation](https://wrongbaud.github.io/assets/img/ghidar-loader/pre-loader.png)
+![USB Annotation](https://wrongbaud.github.io/assets/img/ghidra-loader/pre-loader.png)
 
 At a quick glance, it's hard to determine what this subroutine might be doing. It is accessing memory regions that are not defined and it's hard to make heads or tails of the function's purpose. But after we run it through our loader:
 
-![USB Annotation](https://wrongbaud.github.io/assets/img/ghidar-loader/post-loader.png)
+![USB Annotation](https://wrongbaud.github.io/assets/img/ghidra-loader/post-loader.png)
 
 Using the memory regions and the registers of interest we're able to see that this function is deciding which USB speed to use as well as setting up the basic control registers. Is it perfect? No - of course not, but it does help streamline the process in some way.
 
