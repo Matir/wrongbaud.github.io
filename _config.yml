@@ -51,6 +51,9 @@ links:
 projects:
   - name: Flashtality Parallel Flash Dumper
     url: https://github.com/wrongbaud/flashtality
+  - name: Ghidra STM32 Loader
+    url: https://github.com/wrongbaud/ghidra-stm32
+
 
 # exclude my node related stuff
 exclude: ['package.json', 'src', 'node_modules']
