@@ -28,7 +28,7 @@ In my [last post](https://wrongbaud.github.io/stm-xbox-jtag/), we managed to dum
 
 First off, if you don't have Ghidra, you can always grab the latest version from [here](https://ghidra-sre.org/) or [build it yourself](https://github.com/dukebarman/ghidra-builder), for this post I am using ```9.1.2_PUBLIC``` release from the official site. We'll start by opening the CodeBrowser window by clicking on the green dragon button.
 
-![Ghidra Broswer](https://wrongbaud.github.io/assets/img/ghidra-loader/ghidra-project-window.png)
+![Ghidra Broswer](https://wrongbaud.github.io/assets/img/ghidra-loader/ghdra-project-window.png)
 
 After selecting this, you'll see the following window open up; this is the CodeBrowser
 
